@@ -2,14 +2,13 @@
 Higher-order Navier Stokes on the sphere.
 """
 
-import numpy as np
-from scipy.sparse import linalg as spla
-import sphere_wrapper as sph
-import equations as eq
 import os
-import dedalus.public as de
 import time
 import pathlib
+import numpy as np
+from scipy.sparse import linalg as spla
+from simple_sphere import SimpleSphere, TensorField, TensorSystem
+import equations as eq
 from mpi4py import MPI
 import logging
 logger = logging.getLogger(__name__)
@@ -59,125 +58,20 @@ rank = comm.rank
 
 # Domain
 start_init_time = time.time()
-phi_basis = de.Fourier('phi', 2*(L_max+1), interval=(0,2*np.pi))
-theta_basis = de.Fourier('theta', L_max+1, interval=(0,np.pi))
-domain = de.Domain([phi_basis, theta_basis], grid_dtype=np.float64)
-
-# Sphere
-layout0 = domain.distributor.layouts[0]
-m_start = layout0.start(1)[0]
-m_len = layout0.local_shape(1)[0]
-m_end = m_start + m_len - 1
-S = sph.Sphere(L_max, S_max, m_min=m_start, m_max=m_end)
-
-# Grids
-phi = domain.grids(1)[0]
-theta_slice = domain.distributor.layouts[-1].slices(1)[1]
-theta_len = domain.local_grid_shape(1)[1]
-theta = S.grid[theta_slice].reshape([1,theta_len])
-
-
-class TensorField:
-
-    def __init__(self, domain, rank):
-        self.domain = domain
-        self.rank = rank
-        self.ncomp = 2**rank
-        self.component_fields = [domain.new_field() for i in range(self.ncomp)]
-        self.coeffs = [None for i in range(m_len)]
-        self._layout1 = domain.distributor.layouts[1]
-        # Forward transform to initialize coeffs
-        self.forward_phi()
-        self.forward_theta()
-
-    def set_layout(self, layout):
-        for f in self.component_fields:
-            f.layout = layout
-
-    def forward_phi(self):
-        """Transform field from (phi, theta) to (m, theta)."""
-        for f in self.component_fields:
-            f.require_layout(self._layout1)
-
-    def backward_phi(self):
-        """Transform from (m, theta) to (phi, theta)."""
-        for f in self.component_fields:
-            f.require_grid_space()
-
-    def forward_theta(self):
-        """Transform from (m, theta) to (m, ell)."""
-        for m in range(m_start, m_end+1):
-            dm = m - m_start
-            m_data = [f.data[dm] for f in self.component_fields]
-            # Unpack for rank 0 to counteract shortcut bug in sphere_wrapper
-            if self.rank == 0:
-                m_data, = m_data
-            self.coeffs[dm] = S.forward(m, self.rank, m_data)
-
-    def backward_theta(self):
-        """Transform from (m, ell) to (m, theta)."""
-        self.set_layout(self._layout1)
-        for m in range(m_start, m_end+1):
-            dm = m - m_start
-            m_data = S.backward(m, self.rank, self.coeffs[dm])
-            if self.rank == 0:
-                m_data = [m_data]
-            for i, f in enumerate(self.component_fields):
-                f.data[dm] = m_data[i]
-
-
-class TensorSystem:
-
-    def __init__(self, tensors):
-        self.tensors = tensors
-        self.coeffs = [None for i in range(m_len)]
-        # Pack to initialize data
-        self.pack_coeffs()
-
-    def forward_phi(self):
-        for t in self.tensors:
-            t.forward_phi()
-
-    def backward_phi(self):
-        for t in self.tensors:
-            t.backward_phi()
-
-    def forward_theta(self):
-        for t in self.tensors:
-            t.forward_theta()
-
-    def backward_theta(self):
-        for t in self.tensors:
-            t.backward_theta()
-
-    def pack_coeffs(self):
-        """Pack tensor coefficients into system vectors."""
-        for m in range(m_start, m_end+1):
-            dm = m - m_start
-            m_coeffs = [t.coeffs[dm] for t in self.tensors]
-            self.coeffs[dm] = np.hstack(m_coeffs)
-
-    def unpack_coeffs(self):
-        """Unpack system vectors into tensor coefficients."""
-        for m in range(m_start, m_end+1):
-            dm = m - m_start
-            i0 = 0
-            for t in self.tensors:
-                i1 = i0 + len(t.coeffs[dm])
-                t.coeffs[dm] = self.coeffs[dm][i0:i1]
-                i0 = i1
+simplesphere = SimpleSphere(L_max, S_max)
+domain = simplesphere.domain
 
 # Problem fields
-v = TensorField(domain, rank=1)
-p = TensorField(domain, rank=0)
-state_system = TensorSystem([v, p])
+v = TensorField(simplesphere, rank=1)
+p = TensorField(simplesphere, rank=0)
+state_system = TensorSystem(simplesphere, [v, p])
 
 # Work fields
-om = TensorField(domain, rank=0)
-grad_v = TensorField(domain, rank=2)
-Fv = TensorField(domain, rank=1)
-Fp = TensorField(domain, rank=0)
-RHS_system = TensorSystem([Fv, Fp])
+om = TensorField(simplesphere, rank=0)
+grad_v = TensorField(simplesphere, rank=2)
+Fv = TensorField(simplesphere, rank=1)
+Fp = TensorField(simplesphere, rank=0)
+RHS_system = TensorSystem(simplesphere, [Fv, Fp])
 
 # Unpack components
 v_th, v_ph = v.component_fields
@@ -190,8 +84,7 @@ Fv_th, Fv_ph = Fv.component_fields
 v.forward_phi()
 v.forward_theta()
 rand = np.random.RandomState(seed=42+rank)
-for m in range(m_start, m_end+1):
-    dm = m - m_start
+for dm, m in enumerate(simplesphere.local_m):
     shape = v.coeffs[dm].shape
     noise = rand.standard_normal(shape)
     phase = rand.uniform(0,2*np.pi,shape)
@@ -199,9 +92,9 @@ for m in range(m_start, m_end+1):
 
 # Build matrices
 P, M, L = [], [], []
-for m in range(m_start, m_end+1):
-    logger.info("Building matrix %i in %i-%i" %(m, m_start, m_end))
-    Mm, Lm = eq.advection(S, m, [gamma,e0,e1,e2,fspin])
+for m in simplesphere.local_m:
+    logger.info("Building matrix %i" %m)
+    Mm, Lm = eq.advection(simplesphere.sphere_wrapper, m, [gamma,e0,e1,e2,fspin])
     M.append(Mm.astype(np.complex128))
     L.append(Lm.astype(np.complex128))
     P.append(0.*Mm.astype(np.complex128))
@@ -214,9 +107,8 @@ def compute_RHS(state_system, RHS_system):
     state_system.unpack_coeffs()
 
     # Calculate grad v
-    for m in range(m_start, m_end+1):
-        dm = m - m_start
-        S.grad(m, 1, v.coeffs[dm], grad_v.coeffs[dm])
+    for dm, m in enumerate(simplesphere.local_m):
+        simplesphere.sphere_wrapper.grad(m, 1, v.coeffs[dm], grad_v.coeffs[dm])
 
     # Transform to grid
     v.backward_theta()
@@ -242,8 +134,7 @@ if not os.path.exists(output_folder):
 t = 0
 
 # Combine matrices and perform LU decompositions for constant timestep
-for m in range(m_start, m_end+1):
-    dm = m - m_start
+for dm, m in enumerate(simplesphere.local_m):
     Pdm = M[dm] + dt*L[dm]
     if STORE_LU:
         P[dm] = spla.splu(Pdm.tocsc(), permc_spec=PERMC_SPEC)
@@ -264,13 +155,12 @@ for i in range(n_iterations):
     RHS = RHS_system.coeffs
     X = state_system.coeffs
     # Solve LHS
-    for m in range(m_start, m_end+1):
-        dm = m - m_start
+    for dm, m in enumerate(simplesphere.local_m):
         RHS[dm] = M[dm].dot(X[dm]) + dt*(RHS[dm])
         if STORE_LU:
             X[dm] = P[dm].solve(RHS[dm])
         else:
-            X[dm] = spla.spsolve(P[dm],RHS[dm])
+            X[dm] = spla.spsolve(P[dm], RHS[dm])
     t += dt
 
     # Impose that m=0 mode of state fields are purely real
@@ -287,8 +177,8 @@ for i in range(n_iterations):
         # Unpack state system
         state_system.unpack_coeffs()
         # Compute vorticity
-        for m in range(m_start, m_end+1):
-            dm = m - m_start
+        S = simplesphere.sphere_wrapper
+        for dm, m in enumerate(simplesphere.local_m):
             v_c = v.coeffs[dm]
             # calculating omega = km.up - kp.um
             start_index, end_index, spin = S.tensor_index(m, 1)
@@ -311,7 +201,7 @@ for i in range(n_iterations):
             om_global = np.hstack(om_global)
             np.savez(os.path.join(output_folder, 'output_%i.npz' %file_num),
                      p=p_global, om=om_global, vph=vph_global, vth=vth_global,
-                     t=np.array([t]), phi=phi_basis.grid(1), theta=S.grid)
+                     t=np.array([t]), phi=simplesphere.phi_grid.ravel(), theta=simplesphere.global_theta_grid.ravel())
             file_num += 1
 
             # Print iteration and maximum vorticity
