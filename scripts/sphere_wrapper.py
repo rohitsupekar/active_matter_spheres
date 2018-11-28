@@ -30,7 +30,7 @@ class Sphere:
     @CachedMethod
     def op(self,op_name,m,s):
         return sph.operator(op_name,self.L_max,m,s).astype(np.float64)
-    
+
     @CachedMethod
     def L_min(self,m,s):
         return sph.L_min(m,s)
@@ -45,7 +45,7 @@ class Sphere:
     def backward_spin(self,m,s,data):
         # coefficients --> grid
         return self.pullY[(m,s)].dot(data)
-    
+
     @CachedMethod
     def tensor_index(self,m,rank):
         num = np.arange(2**rank)
@@ -74,7 +74,7 @@ class Sphere:
             return self.forward_spin(m,0,data)
 
         (start_index,end_index,spin) = self.tensor_index(m,rank)
-   
+
         unitary = self.unitary(rank=rank)
 
         data = np.einsum("ij,j...->i...",unitary,data)
