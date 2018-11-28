@@ -4,14 +4,21 @@ Higher-order Navier Stokes on the sphere.
 
 import numpy as np
 from scipy.sparse import linalg as spla
-import sphere as sph
+import sphere_wrapper as sph
 import equations as eq
 import os
 import dedalus.public as de
 import time
 import pathlib
 from mpi4py import MPI
+import logging
+logger = logging.getLogger(__name__)
 
+# Load config options
+from dedalus.tools.config import config
+STORE_LU = config['linear algebra'].getboolean('store_LU')
+PERMC_SPEC = config['linear algebra']['permc_spec']
+USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
 L_max = 255  # spherical harmonic order
@@ -51,6 +58,7 @@ comm = MPI.COMM_WORLD
 rank = comm.rank
 
 # Make domain
+start_init_time = time.time()
 phi_basis   = de.Fourier('phi'  , 2*(L_max+1), interval=(0,2*np.pi))
 theta_basis = de.Fourier('theta', L_max+1, interval=(0,np.pi))
 domain = de.Domain([phi_basis,theta_basis], grid_dtype=np.float64)
@@ -75,7 +83,8 @@ F_ph = domain.new_field()
 p.require_coeff_space()
 m_start = p.layout.start(1)[0]
 m_len = p.layout.local_shape(1)[0]
-S = sph.Sphere(L_max,S_max,m_min=m_start,m_max=m_start+m_len)
+m_end = m_start + m_len - 1
+S = sph.Sphere(L_max,S_max,m_min=m_start,m_max=m_end)
 
 # Calculate theta grid
 theta_slice = domain.distributor.layouts[-1].slices(1)[1]
@@ -102,7 +111,7 @@ for f in [v_thth,v_thph,v_phth,v_phph,F_th,F_ph]:
 
 # Transform theta -> ell, and put data into state vector
 state_vector = []
-for m in range(m_start,m_start+m_len):
+for m in range(m_start,m_end+1):
     md = m - m_start
     v_c = S.forward(m,1,[v_th.data[md],v_ph.data[md]])
     p_c = S.forward(m,0,p.data[md])
@@ -110,7 +119,7 @@ for m in range(m_start,m_start+m_len):
 
 # Add random perturbations to the spectral coefficients
 rand = np.random.RandomState(seed=42+rank)
-for m in range(m_start,m_start+m_len):
+for m in range(m_start,m_end+1):
     md = m - m_start
     v_c, p_c = eq.unpack(S,m,state_vector[md])
     shape = v_c.shape
@@ -121,7 +130,7 @@ for m in range(m_start,m_start+m_len):
 
 # allocating more work arrays
 RHS, Dv_c = [], []
-for m in range(m_start,m_start+m_len):
+for m in range(m_start,m_end+1):
     md = m - m_start
     v_c = S.forward(m,1,[v_th.data[md],v_ph.data[md]])
     p_c = S.forward(m,0,p.data[md])
@@ -130,11 +139,11 @@ for m in range(m_start,m_start+m_len):
 
 # build matrices
 P,M,L = [],[],[]
-for m in range(m_start,m_start+m_len):
+for m in range(m_start,m_end+1):
     Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2])
-    M.append(Mm)
-    L.append(Lm)
-    P.append(0.*Mm)
+    M.append(Mm.astype(np.complex128))
+    L.append(Lm.astype(np.complex128))
+    P.append(0.*Mm.astype(np.complex128))
 
 # calculate RHS nonlinear terms from state_vector
 def nonlinear(state_vector,RHS):
@@ -143,7 +152,7 @@ def nonlinear(state_vector,RHS):
         # Setup temp fields to be in (m, theta), dist over m
         f.layout = domain.distributor.layouts[1]
 
-    for m in range(m_start,m_start+m_len):
+    for m in range(m_start,m_end+1):
         md = m - m_start
 
         # get v and p in coefficient space
@@ -177,7 +186,7 @@ def nonlinear(state_vector,RHS):
         f.require_layout(domain.distributor.layouts[1])
 
     # move workspace into (ell,m)
-    for m in range(m_start,m_start+m_len):
+    for m in range(m_start,m_end+1):
         md = m - m_start
         F_c = S.forward(m,1,[F_th.data[md],F_ph.data[md]])
         G_c = S.forward(m,0,0.*F_th.data[md])
@@ -189,17 +198,31 @@ if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 t = 0
 
+# Combine matrices and perform LU decompositions for constant timestep
+for m in range(m_start,m_end+1):
+    md = m - m_start
+    Pmd = M[md] + dt*L[md]
+    if STORE_LU:
+        P[md] = spla.splu(Pmd.tocsc(), permc_spec=PERMC_SPEC)
+    else:
+        P[md] = Pmd
+
 # Main loop
+end_init_time = time.time()
+logger.info('Initialization time: %f' %(end_init_time-start_init_time))
+logger.info('Starting loop')
+start_run_time = time.time()
+
 for i in range(n_iterations):
 
     nonlinear(state_vector,RHS)
-    for m in range(m_start,m_start+m_len):
+    for m in range(m_start,m_end+1):
         md = m - m_start
-        P[md] = M[md] + dt*L[md]
         RHS[md] = M[md].dot(state_vector[md]) + dt*(RHS[md])
-
-        # take timestep
-        state_vector[md] = spla.spsolve(P[md],RHS[md])
+        if STORE_LU:
+            state_vector[md] = P[md].solve(RHS[md])
+        else:
+            state_vector[md] = spla.spsolve(P[md],RHS[md])
 
     t += dt
 
@@ -221,14 +244,14 @@ for i in range(n_iterations):
             # Setup temp fields to be in (m, theta), dist over m
             f.layout = domain.distributor.layouts[1]
 
-        for m in range(m_start,m_start+m_len):
+        for m in range(m_start,m_end+1):
             md = m - m_start
 
             v_c,p_c = eq.unpack(S,m,state_vector[md])
 
             # calculating omega = km.up - kp.um
             (start_index,end_index,spin) = S.tensor_index(m,1)
-            om_c = 1j*(S.op[(m,1)]['k-'].dot(v_c[start_index[0]:end_index[0]]) - S.op[(m,-1)]['k+'].dot(v_c[start_index[1]:end_index[1]]))
+            om_c = 1j*(S.op('k-',m,1).dot(v_c[start_index[0]:end_index[0]]) - S.op('k+',m,-1).dot(v_c[start_index[1]:end_index[1]]))
 
             # transform to m, theta
             v_g   = S.backward(m,1,v_c)
@@ -261,5 +284,11 @@ for i in range(n_iterations):
             file_num += 1
 
             # Print iteration and maximum vorticity
-            print('Iter:', i, 'Time:', t, 'om max:', np.max(np.abs(om_global)))
+            logger.info('Iter: %i, Time: %f, om max: %f' %(i, t, np.max(np.abs(om_global))))
+
+end_run_time = time.time()
+logger.info('Iterations: %i' %(i+1))
+logger.info('Sim end time: %f' %t)
+logger.info('Run time: %.2f sec' %(end_run_time-start_run_time))
+logger.info('Run time: %f cpu-hr' %((end_run_time-start_run_time)/60/60*domain.dist.comm_cart.size))
 
