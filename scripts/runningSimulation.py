@@ -21,16 +21,16 @@ PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 511  # spherical harmonic order
+L_max = 127  # spherical harmonic order
 S_max = 4  # spin order (leave fixed)
 
-Lmid = 20.0;    #gives 1/10 as characteristic diameter for the vortices
-kappa = 1.5;    #spectral injection bandwidth
-factor = 0.5;   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
+Lmid = 10.0    #gives 1/10 as characteristic diameter for the vortices
+kappa = 1.5    #spectral injection bandwidth
+factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
 
 # Physical parameters
 gamma = 1  # surface mass density
-fspin = 80000
+fspin = 0
 
 ### calculates e0, e1, e2 from Lmid and kappa
 a = 0.25*( 4*kappa**2*Lmid**2 - 2*(2*np.pi*Lmid + 1)**2 )**2 - 34*(2*np.pi*Lmid + 1)**2 + 17**2
@@ -44,9 +44,9 @@ Amp = 1e-2  # initial noise amplitude
 # Integration parameters
 dt = factor/(100*Lmid**2)
 
-n_iterations = int(10000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(100/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
-output_folder = 'dataFolder'  # data output folder
+output_folder = 'output_files'  # data output folder
 
 # Prevent running from dropbox
 path = pathlib.Path(__file__).resolve()
@@ -57,140 +57,183 @@ if 'dropbox' in str(path).lower():
 comm = MPI.COMM_WORLD
 rank = comm.rank
 
-# Make domain
+# Domain
 start_init_time = time.time()
-phi_basis   = de.Fourier('phi'  , 2*(L_max+1), interval=(0,2*np.pi))
+phi_basis = de.Fourier('phi', 2*(L_max+1), interval=(0,2*np.pi))
 theta_basis = de.Fourier('theta', L_max+1, interval=(0,np.pi))
-domain = de.Domain([phi_basis,theta_basis], grid_dtype=np.float64)
-phi = domain.grids(1)[0]
+domain = de.Domain([phi_basis, theta_basis], grid_dtype=np.float64)
 
-# set up fields
-v_th = domain.new_field()
-v_ph = domain.new_field()
-p    = domain.new_field()
-om   = domain.new_field()
-
-# work arrays
-v_thth = domain.new_field()
-v_thph = domain.new_field()
-v_phth = domain.new_field()
-v_phph = domain.new_field()
-
-F_th = domain.new_field()
-F_ph = domain.new_field()
-
-# set up sphere
-p.require_coeff_space()
-m_start = p.layout.start(1)[0]
-m_len = p.layout.local_shape(1)[0]
+# Sphere
+layout0 = domain.distributor.layouts[0]
+m_start = layout0.start(1)[0]
+m_len = layout0.local_shape(1)[0]
 m_end = m_start + m_len - 1
-S = sph.Sphere(L_max,S_max,m_min=m_start,m_max=m_end)
+S = sph.Sphere(L_max, S_max, m_min=m_start, m_max=m_end)
 
-# Calculate theta grid
+# Grids
+phi = domain.grids(1)[0]
 theta_slice = domain.distributor.layouts[-1].slices(1)[1]
 theta_len = domain.local_grid_shape(1)[1]
 theta = S.grid[theta_slice].reshape([1,theta_len])
 
-# Grid initial conditions
 
-# Right now we specify initial conditions in terms of spectral coefficients
-# If you want to specify initial conditions in terms of theta & phi
-# do that here.
+class TensorField:
 
-# Move initial conditions into coefficient space
+    def __init__(self, domain, rank):
+        self.domain = domain
+        self.rank = rank
+        self.ncomp = 2**rank
+        self.component_fields = [domain.new_field() for i in range(self.ncomp)]
+        self.coeffs = [None for i in range(m_len)]
+        self._layout1 = domain.distributor.layouts[1]
+        # Forward transform to initialize coeffs
+        self.forward_phi()
+        self.forward_theta()
 
-# move data into (m,theta):
-for f in [v_th,v_ph,p]:
-        # Move data to (m, theta), dist over m
-        f.require_layout(domain.distributor.layouts[1])
+    def set_layout(self, layout):
+        for f in self.component_fields:
+            f.layout = layout
 
-# move workspace into (m,theta):
-for f in [v_thth,v_thph,v_phth,v_phph,F_th,F_ph]:
-        # Setup temp fields to be in (m, theta), dist over m
-        f.layout = domain.distributor.layouts[1]
+    def forward_phi(self):
+        """Transform field from (phi, theta) to (m, theta)."""
+        for f in self.component_fields:
+            f.require_layout(self._layout1)
 
-# Transform theta -> ell, and put data into state vector
-state_vector = []
-for m in range(m_start,m_end+1):
-    md = m - m_start
-    v_c = S.forward(m,1,[v_th.data[md],v_ph.data[md]])
-    p_c = S.forward(m,0,p.data[md])
-    state_vector.append(eq.packup(v_c,p_c))
+    def backward_phi(self):
+        """Transform from (m, theta) to (phi, theta)."""
+        for f in self.component_fields:
+            f.require_grid_space()
 
-# Add random perturbations to the spectral coefficients
+    def forward_theta(self):
+        """Transform from (m, theta) to (m, ell)."""
+        for m in range(m_start, m_end+1):
+            dm = m - m_start
+            m_data = [f.data[dm] for f in self.component_fields]
+            # Unpack for rank 0 to counteract shortcut bug in sphere_wrapper
+            if self.rank == 0:
+                m_data, = m_data
+            self.coeffs[dm] = S.forward(m, self.rank, m_data)
+
+    def backward_theta(self):
+        """Transform from (m, ell) to (m, theta)."""
+        self.set_layout(self._layout1)
+        for m in range(m_start, m_end+1):
+            dm = m - m_start
+            m_data = S.backward(m, self.rank, self.coeffs[dm])
+            if self.rank == 0:
+                m_data = [m_data]
+            for i, f in enumerate(self.component_fields):
+                f.data[dm] = m_data[i]
+
+
+class TensorSystem:
+
+    def __init__(self, tensors):
+        self.tensors = tensors
+        self.coeffs = [None for i in range(m_len)]
+        # Pack to initialize data
+        self.pack_coeffs()
+
+    def forward_phi(self):
+        for t in self.tensors:
+            t.forward_phi()
+
+    def backward_phi(self):
+        for t in self.tensors:
+            t.backward_phi()
+
+    def forward_theta(self):
+        for t in self.tensors:
+            t.forward_theta()
+
+    def backward_theta(self):
+        for t in self.tensors:
+            t.backward_theta()
+
+    def pack_coeffs(self):
+        """Pack tensor coefficients into system vectors."""
+        for m in range(m_start, m_end+1):
+            dm = m - m_start
+            m_coeffs = [t.coeffs[dm] for t in self.tensors]
+            self.coeffs[dm] = np.hstack(m_coeffs)
+
+    def unpack_coeffs(self):
+        """Unpack system vectors into tensor coefficients."""
+        for m in range(m_start, m_end+1):
+            dm = m - m_start
+            i0 = 0
+            for t in self.tensors:
+                i1 = i0 + len(t.coeffs[dm])
+                t.coeffs[dm] = self.coeffs[dm][i0:i1]
+                i0 = i1
+
+# Problem fields
+v = TensorField(domain, rank=1)
+p = TensorField(domain, rank=0)
+state_system = TensorSystem([v, p])
+
+# Work fields
+om = TensorField(domain, rank=0)
+grad_v = TensorField(domain, rank=2)
+Fv = TensorField(domain, rank=1)
+Fp = TensorField(domain, rank=0)
+RHS_system = TensorSystem([Fv, Fp])
+
+# Unpack components
+v_th, v_ph = v.component_fields
+p0, = p.component_fields
+om0, = om.component_fields
+v_thth, v_phth, v_thph, v_phph = grad_v.component_fields
+Fv_th, Fv_ph = Fv.component_fields
+
+# Add random perturbations to the velocity coefficients
+v.forward_phi()
+v.forward_theta()
 rand = np.random.RandomState(seed=42+rank)
-for m in range(m_start,m_end+1):
-    md = m - m_start
-    v_c, p_c = eq.unpack(S,m,state_vector[md])
-    shape = v_c.shape
+for m in range(m_start, m_end+1):
+    dm = m - m_start
+    shape = v.coeffs[dm].shape
     noise = rand.standard_normal(shape)
     phase = rand.uniform(0,2*np.pi,shape)
-    v_c = Amp * noise*np.exp(1j*phase)
-    state_vector[md] = eq.packup(v_c,p_c)
+    v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
 
-# allocating more work arrays
-RHS, Dv_c = [], []
-for m in range(m_start,m_end+1):
-    md = m - m_start
-    v_c = S.forward(m,1,[v_th.data[md],v_ph.data[md]])
-    p_c = S.forward(m,0,p.data[md])
-    RHS.append(eq.packup(v_c,p_c))
-    Dv_c.append(S.forward(m,2,[p.data[md],p.data[md],p.data[md],p.data[md]]))
-
-# build matrices
-P,M,L = [],[],[]
-for m in range(m_start,m_end+1):
-    Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2,fspin])
+# Build matrices
+P, M, L = [], [], []
+for m in range(m_start, m_end+1):
+    logger.info("Building matrix %i in %i-%i" %(m, m_start, m_end))
+    Mm, Lm = eq.advection(S, m, [gamma,e0,e1,e2,fspin])
     M.append(Mm.astype(np.complex128))
     L.append(Lm.astype(np.complex128))
     P.append(0.*Mm.astype(np.complex128))
 
-# calculate RHS nonlinear terms from state_vector
-def nonlinear(state_vector,RHS):
 
-    for f in [v_th,v_ph,v_thth,v_thph,v_phth,v_phph]:
-        # Setup temp fields to be in (m, theta), dist over m
-        f.layout = domain.distributor.layouts[1]
+def compute_RHS(state_system, RHS_system):
+    """Calculate RHS terms from state vector."""
 
-    for m in range(m_start,m_end+1):
-        md = m - m_start
+    # Unpack state system
+    state_system.unpack_coeffs()
 
-        # get v and p in coefficient space
-        v_c,p_c = eq.unpack(S,m,state_vector[md])
+    # Calculate grad v
+    for m in range(m_start, m_end+1):
+        dm = m - m_start
+        S.grad(m, 1, v.coeffs[dm], grad_v.coeffs[dm])
 
-        # calculate grad v
-        S.grad(m,1,v_c,Dv_c[md])
+    # Transform to grid
+    v.backward_theta()
+    v.backward_phi()
+    grad_v.backward_theta()
+    grad_v.backward_phi()
 
-        # transform v and grad v into (m, theta)
-        v_g    = S.backward(m,1,v_c)
-        Dv_g   = S.backward(m,2,Dv_c[md])
+    # Calculate nonlinear terms
+    Fv_th['g'] = -(v_th['g']*v_thth['g'] + v_ph['g']*v_thph['g'])
+    Fv_ph['g'] = -(v_th['g']*v_phth['g'] + v_ph['g']*v_phph['g'])
 
-        # unpack into theta and phi directions
-        v_th.data[md] = v_g[0]
-        v_ph.data[md] = v_g[1]
-        v_thth.data[md]  = Dv_g[0]
-        v_phth.data[md]  = Dv_g[1]
-        v_thph.data[md]  = Dv_g[2]
-        v_phph.data[md]  = Dv_g[3]
+    # Forward transform F
+    Fv.forward_phi()
+    Fv.forward_theta()
 
-    # transform to grid space
-    for f in [v_th,v_ph,v_thth,v_thph,v_phth,v_phph,F_th,F_ph]: f.require_grid_space()
-
-    # calculate nonlinear terms
-    F_th['g'] = -(v_th['g']*v_thth['g'] + v_ph['g']*v_thph['g'])
-    F_ph['g'] = -(v_th['g']*v_phth['g'] + v_ph['g']*v_phph['g'])
-
-    # move workspace into (m,theta):
-    for f in [F_th,F_ph]:
-        # Change fields to be in (m, theta), dist over m
-        f.require_layout(domain.distributor.layouts[1])
-
-    # move workspace into (ell,m)
-    for m in range(m_start,m_end+1):
-        md = m - m_start
-        F_c = S.forward(m,1,[F_th.data[md],F_ph.data[md]])
-        G_c = S.forward(m,0,0.*F_th.data[md])
-        RHS[md] = eq.packup(F_c,G_c)
+    # Pack RHS system
+    RHS_system.pack_coeffs()
 
 # Setup outputs
 file_num = 1
@@ -199,13 +242,13 @@ if not os.path.exists(output_folder):
 t = 0
 
 # Combine matrices and perform LU decompositions for constant timestep
-for m in range(m_start,m_end+1):
-    md = m - m_start
-    Pmd = M[md] + dt*L[md]
+for m in range(m_start, m_end+1):
+    dm = m - m_start
+    Pdm = M[dm] + dt*L[dm]
     if STORE_LU:
-        P[md] = spla.splu(Pmd.tocsc(), permc_spec=PERMC_SPEC)
+        P[dm] = spla.splu(Pdm.tocsc(), permc_spec=PERMC_SPEC)
     else:
-        P[md] = Pmd
+        P[dm] = Pdm
 
 # Main loop
 end_init_time = time.time()
@@ -213,64 +256,52 @@ logger.info('Initialization time: %f' %(end_init_time-start_init_time))
 logger.info('Starting loop')
 start_run_time = time.time()
 
+state_system.pack_coeffs()
 for i in range(n_iterations):
 
-    nonlinear(state_vector,RHS)
-    for m in range(m_start,m_end+1):
-        md = m - m_start
-        RHS[md] = M[md].dot(state_vector[md]) + dt*(RHS[md])
+    # Compute RHS
+    compute_RHS(state_system, RHS_system)
+    RHS = RHS_system.coeffs
+    X = state_system.coeffs
+    # Solve LHS
+    for m in range(m_start, m_end+1):
+        dm = m - m_start
+        RHS[dm] = M[dm].dot(X[dm]) + dt*(RHS[dm])
         if STORE_LU:
-            state_vector[md] = P[md].solve(RHS[md])
+            X[dm] = P[dm].solve(RHS[dm])
         else:
-            state_vector[md] = spla.spsolve(P[md],RHS[md])
-
+            X[dm] = spla.spsolve(P[dm],RHS[dm])
     t += dt
 
-    # imposing that the m=0 mode of v_th, v_ph, p are purely real
+    # Impose that m=0 mode of state fields are purely real
     if i % 10 == 1 and rank == 0:
-        v_c,p_c = eq.unpack(S,0,state_vector[0])
-        v_g = S.backward(0,1,v_c)
-        v_g.imag = 0.
-        (start_index,end_index,spin) = S.tensor_index(0,1)
-        v_c = S.forward(0,1,v_g)
-        p_c.imag = 0.
-
-        state_vector[0] = eq.packup(v_c,p_c)
+        state_system.unpack_coeffs()
+        state_system.backward_theta()
+        for tensor in state_system.tensors:
+            for field in tensor.component_fields:
+                field.data[0].imag = 0
+        state_system.forward_theta()
+        state_system.pack_coeffs()
 
     if i % n_output == 0:
-
-        # transform back to grid space for output
-        for f in [v_th,v_ph,p,om]:
-            # Setup temp fields to be in (m, theta), dist over m
-            f.layout = domain.distributor.layouts[1]
-
-        for m in range(m_start,m_end+1):
-            md = m - m_start
-
-            v_c,p_c = eq.unpack(S,m,state_vector[md])
-
+        # Unpack state system
+        state_system.unpack_coeffs()
+        # Compute vorticity
+        for m in range(m_start, m_end+1):
+            dm = m - m_start
+            v_c = v.coeffs[dm]
             # calculating omega = km.up - kp.um
-            (start_index,end_index,spin) = S.tensor_index(m,1)
-            om_c = 1j*(S.op('k-',m,1).dot(v_c[start_index[0]:end_index[0]]) - S.op('k+',m,-1).dot(v_c[start_index[1]:end_index[1]]))
-
-            # transform to m, theta
-            v_g   = S.backward(m,1,v_c)
-            p_g   = S.backward(m,0,p_c)
-            om_g  = S.backward(m,0,om_c)
-
-            v_th.data[md] = v_g[0]
-            v_ph.data[md] = v_g[1]
-            p.data[md]    = p_g
-            om.data[md]   = om_g
-
-        # go to grid space
-        for f in [v_th,v_ph,p,om]: f.require_grid_space()
-
-        # gather full data to output
+            start_index, end_index, spin = S.tensor_index(m, 1)
+            om.coeffs[dm] = 1j*(S.op('k-',m,1).dot(v_c[start_index[0]:end_index[0]]) - S.op('k+',m,-1).dot(v_c[start_index[1]:end_index[1]]))
+        # Transform to grid
+        for f in [v, p, om]:
+            f.backward_theta()
+            f.backward_phi()
+        # Gather full data to output
         vph_global = comm.gather(v_ph['g'], root=0)
         vth_global = comm.gather(v_th['g'], root=0)
-        p_global = comm.gather(p['g'], root=0)
-        om_global = comm.gather(om['g'], root=0)
+        p_global = comm.gather(p0['g'], root=0)
+        om_global = comm.gather(om0['g'], root=0)
 
         if rank == 0:
             # Save data

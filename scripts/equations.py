@@ -1,6 +1,6 @@
 import numpy             as np
 import scipy.sparse      as sparse
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from scipy.linalg         import eig
 #from mpl_toolkits.basemap import Basemap
 
