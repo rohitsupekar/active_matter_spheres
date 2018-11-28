@@ -28,6 +28,7 @@ Lmid = 50
 e0 = 0.1  # friction term
 e1 = 0.21 / Lmid**2  # forcing term
 e2 = 0.1 / Lmid**4  # damping term
+fspin = 0  # rotation
 Amp = 1e-2  # initial noise amplitude
 
 # Integration parameters
@@ -127,7 +128,7 @@ for m in range(m_start,m_end+1):
 # build matrices
 P,M,L = [],[],[]
 for m in range(m_start,m_end+1):
-    Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2])
+    Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2,fspin])
     M.append(Mm.astype(np.complex128))
     L.append(Lm.astype(np.complex128))
     P.append(0.*Mm.astype(np.complex128))

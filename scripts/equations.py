@@ -9,11 +9,12 @@ from scipy.linalg         import eig
 # e0: friction term
 # e1: forcing laplacian term
 # e2: small scale damping term
+# f: 2 Omega_z, rotation
 
 # equations:
 
-# g*dt(up) - kp*p - 2*km*eps*kp*up = - (u.grad u)_p
-# g*dt(um) - km*p - 2*kp*eps*km*um = - (u.grad u)_m
+# g*dt(up) - kp*p - 2*km*eps*kp*up = - (u.grad u)_p - i*f*C*up
+# g*dt(um) - km*p - 2*kp*eps*km*um = - (u.grad u)_m + i*f*C*um
 # kp*um + km*up = 0
 # where
 # eps = e0 + e1*(kp*km + km*kp) + e2*(kp*km + km*kp)*(kp*km + km*kp)
@@ -22,18 +23,19 @@ from scipy.linalg         import eig
 
 def advection(S,m,params):
     """Defines M, L matrices for advection"""
-        
-    g,e0,e1,e2  = params[0],params[1],params[2],params[3]
-    
-    # (+,+)    
+
+    g,e0,e1,e2,f  = params[0],params[1],params[2],params[3],params[4]
+
+    # (+,+)
     L00 = -2*S.op('k-',m,2).dot(
-                ( e0*S.op('I',m,2) + e1*( S.op('k+',m,1).dot(S.op('k-',m,2)) 
+                ( e0*S.op('I',m,2) + e1*( S.op('k+',m,1).dot(S.op('k-',m,2))
                                          +S.op('k-',m,3).dot(S.op('k+',m,2)))
-                                   + e2*( S.op('k+',m,1).dot(S.op('k-',m,2)) 
+                                   + e2*( S.op('k+',m,1).dot(S.op('k-',m,2))
                                          +S.op('k-',m,3).dot(S.op('k+',m,2))).dot
                                         ( S.op('k+',m,1).dot(S.op('k-',m,2))
                                          +S.op('k-',m,3).dot(S.op('k+',m,2)))
                                                                             ).dot(S.op('k+',m,1)) )
+    L00 += 1j*f*S.op('C',m,1)
 
     # (+,-)
     L01 = S.zeros(m,1,-1)
@@ -53,6 +55,7 @@ def advection(S,m,params):
                                          ( S.op('k+',m,-3).dot(S.op('k-',m,-2))
                                           +S.op('k-',m,-1).dot(S.op('k+',m,-2)))
                                                                                ).dot(S.op('k-',m,-1)) )
+    L11 += -1j*f*S.op('C',m,-1)
 
     # (-,p)
     L12 = -S.op('k-',m,0)
@@ -87,7 +90,7 @@ def advection(S,m,params):
     return R,L
 
 def unpack(S,m,vec):
-    
+
     (start_index,end_index,spins) = S.tensor_index(m,1)
     v    = vec[0:end_index[-1]]
     p    = vec[end_index[-1]:end_index[-1]+S.L_max-S.L_min(m,0)+1]
@@ -106,18 +109,18 @@ def eigensolve(R,L):
     return vals,vecs
 
 def show_ball(S, field, index, longitude=0, latitude=0, mp = None):
-    
+
     if mp == None:
         figure, ax = plt.subplots(1,1)
         figure.set_size_inches(3,3)
 
     lon = np.linspace(0, 2*np.pi, 2*(S.L_max+1))
     lat = S.grid - np.pi/2
-    
+
     meshed_grid = np.meshgrid(lon, lat)
     lat_grid = meshed_grid[1]
     lon_grid = meshed_grid[0]
-    
+
     if mp == None:
         mp = Basemap(projection='ortho', lat_0=latitude, lon_0=longitude, ax=ax)
         mp.drawmapboundary()
@@ -126,7 +129,7 @@ def show_ball(S, field, index, longitude=0, latitude=0, mp = None):
 
     x, y = mp(np.degrees(lon_grid), np.degrees(lat_grid))
     im = mp.pcolor(x, y, np.transpose(field), cmap='RdYlBu_r')
-    
-    
+
+
     plt.savefig('images/om_%05i.png' %index)
     return im,mp

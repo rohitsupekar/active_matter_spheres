@@ -21,16 +21,16 @@ PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 255  # spherical harmonic order
+L_max = 511  # spherical harmonic order
 S_max = 4  # spin order (leave fixed)
 
-Lmid = 10.0;    #gives 1/10 as characteristic diameter for the vortices
-kappa = 0.5;    #spectral injection bandwidth
+Lmid = 20.0;    #gives 1/10 as characteristic diameter for the vortices
+kappa = 1.5;    #spectral injection bandwidth
 factor = 0.5;   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
 
 # Physical parameters
 gamma = 1  # surface mass density
-
+fspin = 80000
 
 ### calculates e0, e1, e2 from Lmid and kappa
 a = 0.25*( 4*kappa**2*Lmid**2 - 2*(2*np.pi*Lmid + 1)**2 )**2 - 34*(2*np.pi*Lmid + 1)**2 + 17**2
@@ -140,7 +140,7 @@ for m in range(m_start,m_end+1):
 # build matrices
 P,M,L = [],[],[]
 for m in range(m_start,m_end+1):
-    Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2])
+    Mm,Lm = eq.advection(S,m,[gamma,e0,e1,e2,fspin])
     M.append(Mm.astype(np.complex128))
     L.append(Lm.astype(np.complex128))
     P.append(0.*Mm.astype(np.complex128))
