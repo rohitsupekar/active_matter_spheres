@@ -23,14 +23,11 @@ USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 L_max = 127  # spherical harmonic order
 S_max = 4  # spin order (leave fixed)
 
+# Physical parameters
 Lmid = 10.0    #gives 1/10 as characteristic diameter for the vortices
 kappa = 1.5    #spectral injection bandwidth
-factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
-
-# Physical parameters
 gamma = 1  # surface mass density
 fspin = 0
-
 ### calculates e0, e1, e2 from Lmid and kappa
 a = 0.25*( 4*kappa**2*Lmid**2 - 2*(2*np.pi*Lmid + 1)**2 )**2 - 34*(2*np.pi*Lmid + 1)**2 + 17**2
 b = ( 17/4 - 0.25*(2*np.pi*Lmid+1)**2 )**2
@@ -41,8 +38,8 @@ e1 = - 2*(17/4 - 0.25*(2*np.pi*Lmid+1)**2 )*e2
 Amp = 1e-2  # initial noise amplitude
 
 # Integration parameters
+factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
 dt = factor/(100*Lmid**2)
-
 n_iterations = int(100/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
 output_folder = 'output_files'  # data output folder
@@ -80,6 +77,7 @@ om0, = om.component_fields
 v_thth, v_phth, v_thph, v_phph = grad_v.component_fields
 Fv_th, Fv_ph = Fv.component_fields
 
+# Initial conditions
 # Add random perturbations to the velocity coefficients
 v.forward_phi()
 v.forward_theta()
@@ -89,6 +87,7 @@ for dm, m in enumerate(simplesphere.local_m):
     noise = rand.standard_normal(shape)
     phase = rand.uniform(0,2*np.pi,shape)
     v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
+state_system.pack_coeffs()
 
 # Build matrices
 P, M, L = [], [], []
@@ -97,33 +96,30 @@ for m in simplesphere.local_m:
     Mm, Lm = eq.advection(simplesphere.sphere_wrapper, m, [gamma,e0,e1,e2,fspin])
     M.append(Mm.astype(np.complex128))
     L.append(Lm.astype(np.complex128))
-    P.append(0.*Mm.astype(np.complex128))
-
+    # Combine matrices and perform LU decompositions for constant timestep
+    Pdm = M[-1] + dt*L[-1]
+    if STORE_LU:
+        Pdm = spla.splu(Pdm.tocsc(), permc_spec=PERMC_SPEC)
+    P.append(Pdm)
 
 def compute_RHS(state_system, RHS_system):
     """Calculate RHS terms from state vector."""
-
     # Unpack state system
     state_system.unpack_coeffs()
-
     # Calculate grad v
     for dm, m in enumerate(simplesphere.local_m):
         simplesphere.sphere_wrapper.grad(m, 1, v.coeffs[dm], grad_v.coeffs[dm])
-
     # Transform to grid
     v.backward_theta()
     v.backward_phi()
     grad_v.backward_theta()
     grad_v.backward_phi()
-
     # Calculate nonlinear terms
     Fv_th['g'] = -(v_th['g']*v_thth['g'] + v_ph['g']*v_thph['g'])
     Fv_ph['g'] = -(v_th['g']*v_phth['g'] + v_ph['g']*v_phph['g'])
-
     # Forward transform F
     Fv.forward_phi()
     Fv.forward_theta()
-
     # Pack RHS system
     RHS_system.pack_coeffs()
 
@@ -131,15 +127,6 @@ def compute_RHS(state_system, RHS_system):
 file_num = 1
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
-t = 0
-
-# Combine matrices and perform LU decompositions for constant timestep
-for dm, m in enumerate(simplesphere.local_m):
-    Pdm = M[dm] + dt*L[dm]
-    if STORE_LU:
-        P[dm] = spla.splu(Pdm.tocsc(), permc_spec=PERMC_SPEC)
-    else:
-        P[dm] = Pdm
 
 # Main loop
 end_init_time = time.time()
@@ -147,9 +134,10 @@ logger.info('Initialization time: %f' %(end_init_time-start_init_time))
 logger.info('Starting loop')
 start_run_time = time.time()
 
-state_system.pack_coeffs()
+t = 0
 for i in range(n_iterations):
 
+    # Timestepping
     # Compute RHS
     compute_RHS(state_system, RHS_system)
     RHS = RHS_system.coeffs
@@ -163,6 +151,7 @@ for i in range(n_iterations):
             X[dm] = spla.spsolve(P[dm], RHS[dm])
     t += dt
 
+    # Imagination cleaning
     # Impose that m=0 mode of state fields are purely real
     if i % 10 == 1 and rank == 0:
         state_system.unpack_coeffs()
@@ -173,6 +162,7 @@ for i in range(n_iterations):
         state_system.forward_theta()
         state_system.pack_coeffs()
 
+    # Output
     if i % n_output == 0:
         # Unpack state system
         state_system.unpack_coeffs()
@@ -192,9 +182,8 @@ for i in range(n_iterations):
         vth_global = comm.gather(v_th['g'], root=0)
         p_global = comm.gather(p0['g'], root=0)
         om_global = comm.gather(om0['g'], root=0)
-
+        # Save data
         if rank == 0:
-            # Save data
             vph_global = np.hstack(vph_global)
             vth_global = np.hstack(vth_global)
             p_global = np.hstack(p_global)
@@ -203,8 +192,6 @@ for i in range(n_iterations):
                      p=p_global, om=om_global, vph=vph_global, vth=vth_global,
                      t=np.array([t]), phi=simplesphere.phi_grid.ravel(), theta=simplesphere.global_theta_grid.ravel())
             file_num += 1
-
-            # Print iteration and maximum vorticity
             logger.info('Iter: %i, Time: %f, om max: %f' %(i, t, np.max(np.abs(om_global))))
 
 end_run_time = time.time()
