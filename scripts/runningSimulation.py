@@ -1,29 +1,27 @@
-"""
-Higher-order Navier Stokes on the sphere.
-"""
+"""Simulation script."""
 
 import os
 import time
 import pathlib
-import numpy as np
-from scipy.sparse import linalg as spla
-from simple_sphere import SimpleSphere, TensorField, TensorSystem
-import equations as eq
-from mpi4py import MPI
 import logging
-logger = logging.getLogger(__name__)
-
-# Load config options
+import numpy as np
+from mpi4py import MPI
+from scipy.sparse import linalg as spla
 from dedalus.tools.config import config
+from simple_sphere import SimpleSphere
+import equations
+
+# Logging and config
+logger = logging.getLogger(__name__)
 STORE_LU = config['linear algebra'].getboolean('store_LU')
 PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 127  # spherical harmonic order
-S_max = 4  # spin order (leave fixed)
+L_max = 127  # Spherical harmonic order
+S_max = 4  # Spin order (leave fixed)
 
-# Physical parameters
+# Model parameters
 Lmid = 10.0    #gives 1/10 as characteristic diameter for the vortices
 kappa = 1.5    #spectral injection bandwidth
 gamma = 1  # surface mass density
@@ -35,13 +33,15 @@ c = Lmid**2/(  (17/4 - 0.25*(2*np.pi*Lmid + 1)**2 -2/(Lmid**2) ) )
 e0 = a*c/(a-16*b)
 e2 = c/(a/16 - b)
 e1 = - 2*(17/4 - 0.25*(2*np.pi*Lmid+1)**2 )*e2
-Amp = 1e-2  # initial noise amplitude
+params = [gamma, e0, e1, e2, fspin]
 
 # Integration parameters
+Amp = 1e-2  # initial noise amplitude
 factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
 dt = factor/(100*Lmid**2)
 n_iterations = int(100/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
+n_clean = 10
 output_folder = 'output_files'  # data output folder
 
 # Prevent running from dropbox
@@ -58,29 +58,23 @@ start_init_time = time.time()
 simplesphere = SimpleSphere(L_max, S_max)
 domain = simplesphere.domain
 
-# Problem fields
-v = TensorField(simplesphere, rank=1)
-p = TensorField(simplesphere, rank=0)
-state_system = TensorSystem(simplesphere, [v, p])
+# Model
+model = equations.ActiveMatterModel(simplesphere, params)
+state_system = model.state_system
 
-# Work fields
-om = TensorField(simplesphere, rank=0)
-grad_v = TensorField(simplesphere, rank=2)
-Fv = TensorField(simplesphere, rank=1)
-Fp = TensorField(simplesphere, rank=0)
-RHS_system = TensorSystem(simplesphere, [Fv, Fp])
-
-# Unpack components
-v_th, v_ph = v.component_fields
-p0, = p.component_fields
-om0, = om.component_fields
-v_thth, v_phth, v_thph, v_phph = grad_v.component_fields
-Fv_th, Fv_ph = Fv.component_fields
+# Matrices
+# Combine matrices and perform LU decompositions for constant timestep
+A = []
+for dm, m in enumerate(simplesphere.local_m):
+    # Backward Euler for LHS
+    Am = model.M[dm] + dt*model.L[dm]
+    if STORE_LU:
+        Am = spla.splu(Am.tocsc(), permc_spec=PERMC_SPEC)
+    A.append(Am)
 
 # Initial conditions
 # Add random perturbations to the velocity coefficients
-v.forward_phi()
-v.forward_theta()
+v = model.v
 rand = np.random.RandomState(seed=42+rank)
 for dm, m in enumerate(simplesphere.local_m):
     shape = v.coeffs[dm].shape
@@ -89,44 +83,12 @@ for dm, m in enumerate(simplesphere.local_m):
     v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
 state_system.pack_coeffs()
 
-# Build matrices
-P, M, L = [], [], []
-for m in simplesphere.local_m:
-    logger.info("Building matrix %i" %m)
-    Mm, Lm = eq.advection(simplesphere.sphere_wrapper, m, [gamma,e0,e1,e2,fspin])
-    M.append(Mm.astype(np.complex128))
-    L.append(Lm.astype(np.complex128))
-    # Combine matrices and perform LU decompositions for constant timestep
-    Pdm = M[-1] + dt*L[-1]
-    if STORE_LU:
-        Pdm = spla.splu(Pdm.tocsc(), permc_spec=PERMC_SPEC)
-    P.append(Pdm)
-
-def compute_RHS(state_system, RHS_system):
-    """Calculate RHS terms from state vector."""
-    # Unpack state system
-    state_system.unpack_coeffs()
-    # Calculate grad v
-    for dm, m in enumerate(simplesphere.local_m):
-        simplesphere.sphere_wrapper.grad(m, 1, v.coeffs[dm], grad_v.coeffs[dm])
-    # Transform to grid
-    v.backward_theta()
-    v.backward_phi()
-    grad_v.backward_theta()
-    grad_v.backward_phi()
-    # Calculate nonlinear terms
-    Fv_th['g'] = -(v_th['g']*v_thth['g'] + v_ph['g']*v_thph['g'])
-    Fv_ph['g'] = -(v_th['g']*v_phth['g'] + v_ph['g']*v_phph['g'])
-    # Forward transform F
-    Fv.forward_phi()
-    Fv.forward_theta()
-    # Pack RHS system
-    RHS_system.pack_coeffs()
-
 # Setup outputs
 file_num = 1
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
+phi_flat = simplesphere.phi_grid.ravel()
+theta_flat = simplesphere.global_theta_grid.ravel()
 
 # Main loop
 end_init_time = time.time()
@@ -135,64 +97,46 @@ logger.info('Starting loop')
 start_run_time = time.time()
 
 t = 0
+RHS = model.RHS_system.coeffs
+X = model.state_system.coeffs
 for i in range(n_iterations):
 
-    # Timestepping
-    # Compute RHS
-    compute_RHS(state_system, RHS_system)
-    RHS = RHS_system.coeffs
-    X = state_system.coeffs
-    # Solve LHS
+    # Timestep
+    model.compute_RHS()
     for dm, m in enumerate(simplesphere.local_m):
-        RHS[dm] = M[dm].dot(X[dm]) + dt*(RHS[dm])
+        # Forward Euler for RHS
+        RHS[dm] = model.M[dm].dot(X[dm]) + dt*(RHS[dm])
         if STORE_LU:
-            X[dm] = P[dm].solve(RHS[dm])
+            X[dm] = A[dm].solve(RHS[dm])
         else:
-            X[dm] = spla.spsolve(P[dm], RHS[dm])
+            X[dm] = spla.spsolve(A[dm], RHS[dm])
     t += dt
 
     # Imagination cleaning
-    # Impose that m=0 mode of state fields are purely real
-    if i % 10 == 1 and rank == 0:
+    if i % n_clean == 0:
+        # Zero imaginary part by performing full transform loop
         state_system.unpack_coeffs()
         state_system.backward_theta()
-        for tensor in state_system.tensors:
-            for field in tensor.component_fields:
-                field.data[0].imag = 0
+        state_system.backward_phi()
+        state_system.forward_phi()
         state_system.forward_theta()
         state_system.pack_coeffs()
 
     # Output
     if i % n_output == 0:
-        # Unpack state system
-        state_system.unpack_coeffs()
-        # Compute vorticity
-        S = simplesphere.sphere_wrapper
-        for dm, m in enumerate(simplesphere.local_m):
-            v_c = v.coeffs[dm]
-            # calculating omega = km.up - kp.um
-            start_index, end_index, spin = S.tensor_index(m, 1)
-            om.coeffs[dm] = 1j*(S.op('k-',m,1).dot(v_c[start_index[0]:end_index[0]]) - S.op('k+',m,-1).dot(v_c[start_index[1]:end_index[1]]))
-        # Transform to grid
-        for f in [v, p, om]:
-            f.backward_theta()
-            f.backward_phi()
         # Gather full data to output
-        vph_global = comm.gather(v_ph['g'], root=0)
-        vth_global = comm.gather(v_th['g'], root=0)
-        p_global = comm.gather(p0['g'], root=0)
-        om_global = comm.gather(om0['g'], root=0)
+        model.compute_analysis()
+        output = {}
+        for task in model.analysis:
+            output[task] = comm.gather(model.analysis[task], root=0)
         # Save data
         if rank == 0:
-            vph_global = np.hstack(vph_global)
-            vth_global = np.hstack(vth_global)
-            p_global = np.hstack(p_global)
-            om_global = np.hstack(om_global)
+            for task in output:
+                output[task] = np.hstack(output[task])
             np.savez(os.path.join(output_folder, 'output_%i.npz' %file_num),
-                     p=p_global, om=om_global, vph=vph_global, vth=vth_global,
-                     t=np.array([t]), phi=simplesphere.phi_grid.ravel(), theta=simplesphere.global_theta_grid.ravel())
-            file_num += 1
-            logger.info('Iter: %i, Time: %f, om max: %f' %(i, t, np.max(np.abs(om_global))))
+                     t=np.array([t]), phi=phi_flat, theta=theta_flat, **output)
+            logger.info('Iter: %i, Time: %f, KE max: %f' %(i, t, np.max(np.abs(output['KE']))))
+        file_num += 1
 
 end_run_time = time.time()
 logger.info('Iterations: %i' %(i+1))
