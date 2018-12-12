@@ -19,8 +19,8 @@ class ActiveMatterModel:
         f: 2 Omega_z, rotation
 
     Equations:
-        g*dt(up) - kp*p - 2*km*eps*kp*up = - (u.grad u)_p - i*f*C*up
-        g*dt(um) - km*p - 2*kp*eps*km*um = - (u.grad u)_m + i*f*C*um
+        g*dt(up) - kp*p - 2*km*eps*kp*up + i*f*Cp*up = - (u.grad u)_p
+        g*dt(um) - km*p - 2*kp*eps*km*um - i*f*Cm*um = - (u.grad u)_m
         kp*um + km*up = 0
 
     where
