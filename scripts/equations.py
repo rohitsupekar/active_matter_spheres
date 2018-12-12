@@ -11,22 +11,22 @@ class ActiveMatterModel:
     """
     Model for active matter equations on the sphere.
 
-    parameters:
-    g: (gamma) surface mass density
-    e0: friction term
-    e1: forcing laplacian term
-    e2: small scale damping term
-    f: 2 Omega_z, rotation
+    Parameters:
+        g: (gamma) surface mass density
+        e0: friction term
+        e1: forcing laplacian term
+        e2: small scale damping term
+        f: 2 Omega_z, rotation
 
-    equations:
+    Equations:
+        g*dt(up) - kp*p - 2*km*eps*kp*up = - (u.grad u)_p - i*f*C*up
+        g*dt(um) - km*p - 2*kp*eps*km*um = - (u.grad u)_m + i*f*C*um
+        kp*um + km*up = 0
 
-    g*dt(up) - kp*p - 2*km*eps*kp*up = - (u.grad u)_p - i*f*C*up
-    g*dt(um) - km*p - 2*kp*eps*km*um = - (u.grad u)_m + i*f*C*um
-    kp*um + km*up = 0
     where
-    eps = e0 + e1*(kp*km + km*kp) + e2*(kp*km + km*kp)*(kp*km + km*kp)
+        eps = e0 + e1*(kp*km + km*kp) + e2*(kp*km + km*kp)*(kp*km + km*kp)
 
-    variable order: up, um, p
+    Variable order: up, um, p
 
     """
 
