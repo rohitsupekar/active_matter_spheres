@@ -26,13 +26,15 @@ Lmid = 4   #gives 1/10 as characteristic diameter for the vortices
 kappa = 1    #spectral injection bandwidth
 gamma = 1  # surface mass density
 fspin = 0
+
 ### calculates e0, e1, e2 from Lmid and kappa
-a = 0.25*( 4*kappa**2*Lmid**2 - 2*(2*np.pi*Lmid + 1)**2 )**2 - 34*(2*np.pi*Lmid + 1)**2 + 17**2
-b = ( 17/4 - 0.25*(2*np.pi*Lmid+1)**2 )**2
-c = 1/(  (17/4 - 0.25*(2*np.pi*Lmid + 1)**2 -2/(Lmid**2) ) )
-e0 = a*c/(a-16*b)
-e2 = c/(a/16 - b)
-e1 = - 2*(17/4 - 0.25*(2*np.pi*Lmid+1)**2 )*e2
+a = 0.25*(Lmid**2*kappa**2 - 0.5*(2*np.pi*Lmid+1)**2)**2 + 17*17/16 - (34/16)*(2*np.pi*Lmid+1)**2
+b = (17/4 - 0.25*(2*np.pi*Lmid+1)**2)**2
+c = 1/(17/4 - 0.25*(2*np.pi*Lmid + 1)**2 - 2)
+e0 = a*c/(a-b)
+e1 = 2*np.sqrt(b)*c/(a-b)
+e2 = c/(a-b)
+
 params = [gamma, e0, e1, e2, fspin]
 
 # Integration parameters
