@@ -22,14 +22,14 @@ L_max = 127  # Spherical harmonic order
 S_max = 4  # Spin order (leave fixed)
 
 # Model parameters
-Lmid = 10.0    #gives 1/10 as characteristic diameter for the vortices
-kappa = 1.5    #spectral injection bandwidth
+Lmid = 4   #gives 1/10 as characteristic diameter for the vortices
+kappa = 1    #spectral injection bandwidth
 gamma = 1  # surface mass density
 fspin = 0
 ### calculates e0, e1, e2 from Lmid and kappa
 a = 0.25*( 4*kappa**2*Lmid**2 - 2*(2*np.pi*Lmid + 1)**2 )**2 - 34*(2*np.pi*Lmid + 1)**2 + 17**2
 b = ( 17/4 - 0.25*(2*np.pi*Lmid+1)**2 )**2
-c = Lmid**2/(  (17/4 - 0.25*(2*np.pi*Lmid + 1)**2 -2/(Lmid**2) ) )
+c = 1/(  (17/4 - 0.25*(2*np.pi*Lmid + 1)**2 -2/(Lmid**2) ) )
 e0 = a*c/(a-16*b)
 e2 = c/(a/16 - b)
 e1 = - 2*(17/4 - 0.25*(2*np.pi*Lmid+1)**2 )*e2
@@ -38,7 +38,7 @@ params = [gamma, e0, e1, e2, fspin]
 # Integration parameters
 Amp = 1e-2  # initial noise amplitude
 factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
-dt = factor/(100*Lmid**2)
+dt = factor/(100)
 n_iterations = int(100/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
 n_clean = 10
