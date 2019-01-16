@@ -9,22 +9,26 @@ from mpi4py import MPI
 comm = MPI.COMM_WORLD
 import cartopy.crs as ccrs
 from dedalus.extras import plot_tools
+import logging
+logger = logging.getLogger(__name__)
 
 
 # Parameters
 first_frame = 1
-last_frame = 20
-figsize = (8, 4)
+last_frame = 100
+figsize = (6, 6)
 dpi = 256
-show_time = False
-gridlines = False
+show_time = True
+gridlines = True
 coastlines = False
-edgecolor = 'none'
+edgecolor = 'k'
 proj = ccrs.PlateCarree(central_longitude=0)#, central_latitude=30)
 proj = ccrs.Mollweide(central_longitude=0)
-fields = ['p','om','vth','vph']
-output_folder = 'images_pc'
-clim = None
+proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
+#fields = ['p','om','v_th','v_ph']
+fields = ['om']
+output_folder = 'images_pc_kappa1'
+clim = 200
 
 # Setup output folder
 if comm.rank == 0:
@@ -36,10 +40,13 @@ comm.barrier()
 fig = plt.figure(figsize=figsize)
 axes = plt.axes((0, 0, 1, 1), projection=proj)
 
+
 # Plot outputs
 for i in range(first_frame + comm.rank, last_frame + 1, comm.size):
     # Load data
-    with np.load('output_files/output_%i.npz' %i) as file:
+    logger.info('Iterations: %i' %i)
+
+    with np.load('output_files_kappa1/output_%i.npz' %i) as file:
         if i == first_frame + comm.rank:
             phi = file['phi']
             theta = file['theta']
@@ -72,4 +79,3 @@ for i in range(first_frame + comm.rank, last_frame + 1, comm.size):
                 clim_i = np.max(np.abs(data))
                 image.set_clim(-clim_i, clim_i)
             plt.savefig(os.path.join(output_folder, '%s_%05i.png' %(field, i)), dpi=dpi)
-
