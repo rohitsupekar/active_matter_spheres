@@ -10,6 +10,7 @@ comm = MPI.COMM_WORLD
 import cartopy.crs as ccrs
 from dedalus.extras import plot_tools
 import logging
+
 logger = logging.getLogger(__name__)
 
 

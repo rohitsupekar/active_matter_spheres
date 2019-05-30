@@ -27,7 +27,7 @@ proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
 fields = ['vph']
-output_folder = 'images_pc_kappa1'
+output_folder = 'garbage'
 #clim = 200
 
 # Setup output folder

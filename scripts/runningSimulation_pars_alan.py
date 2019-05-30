@@ -28,8 +28,7 @@ kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
 
-print("*************SIMULATION PARAMS**************")
-print("Lmid = ", Lmid, ", kappa = ", kappa, ", f = ", fspin)
+logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 
 ### calculates e0, e1, e2 from Lmid and kappa
 a = 0.25*(Lmid**2*kappa**2 - 0.5*(2*np.pi*Lmid+1)**2)**2 + 17*17/16 - (34/16)*(2*np.pi*Lmid+1)**2
@@ -43,12 +42,13 @@ params = [gamma, e0, e1, e2, fspin]
 
 # Integration parameters
 Amp = 1e-2  # initial noise amplitude
-factor = 0.1   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
+#factor = 0.5   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
+factor = float(sys.argv[4])
 dt = factor/(100)
-n_iterations = int(5000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(10000/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(5/factor)  # data output cadence
 n_clean = 10
-output_folder = sys.argv[4]  # data output folder
+output_folder = sys.argv[5]  # data output folder
 
 # Prevent running from dropbox
 path = pathlib.Path(__file__).resolve()
@@ -81,7 +81,9 @@ for dm, m in enumerate(simplesphere.local_m):
 # Initial conditions
 # Add random perturbations to the velocity coefficients
 v = model.v
-rand = np.random.RandomState(seed=42+rank)
+seed0 = np.random.randint(0, 1000)
+logger.info("seed0 = %i" %(seed0))
+rand = np.random.RandomState(seed=seed0+rank)
 for dm, m in enumerate(simplesphere.local_m):
     shape = v.coeffs[dm].shape
     noise = rand.standard_normal(shape)
@@ -149,4 +151,3 @@ logger.info('Iterations: %i' %(i+1))
 logger.info('Sim end time: %f' %t)
 logger.info('Run time: %.2f sec' %(end_run_time-start_run_time))
 logger.info('Run time: %f cpu-hr' %((end_run_time-start_run_time)/60/60*domain.dist.comm_cart.size))
-

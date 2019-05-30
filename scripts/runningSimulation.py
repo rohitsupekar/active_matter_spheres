@@ -44,7 +44,7 @@ dt = factor/(100)
 n_iterations = int(100/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
 n_clean = 10
-output_folder = 'output_files'  # data output folder
+output_folder = 'output_garbage'  # data output folder
 
 # Prevent running from dropbox
 path = pathlib.Path(__file__).resolve()
@@ -145,4 +145,3 @@ logger.info('Iterations: %i' %(i+1))
 logger.info('Sim end time: %f' %t)
 logger.info('Run time: %.2f sec' %(end_run_time-start_run_time))
 logger.info('Run time: %f cpu-hr' %((end_run_time-start_run_time)/60/60*domain.dist.comm_cart.size))
-
