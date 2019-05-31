@@ -1,0 +1,65 @@
+Session Name	Lmid	Kappa	f	factor
+sphere8		4	1.5	10
+sphere9		4	1.5	100
+sphere10	4	1.5	1000
+sphere11	4	1.5	250
+sphere12	4	1.5	400
+sphere13	4	1.5	550
+sphere14	4	1.5	700
+sphere15	4	1.5	850
+sphere20	8	1	10000
+sphere21	8	1	10000
+sphere22	2	0.5	0
+sphere25	4	0.5	250
+sphere26	4	0.5	400
+sphere27	4	0.5	550
+sphere28	4	0.5	700
+sphere29	4	0.5	850
+sphere30	4	0.5	1000
+sphere31	4	1	1000
+sphere32	4	0.5	1000
+sphere33	4	1	1000
+sphere34	4	0.5	1000
+sphere35	4	1	1000
+sphere36	4	0.5	1000
+sphere37	4	1	1000
+sphere38	4	0.6	1000
+sphere39	4	0.7	1000
+sphere40	4	0.8	1000
+sphere41	4	0.9	1000
+sphere42	4	1.1	1000
+sphere43	4	1.2	1000
+sphere44	4	1	1000 Smaller Time step 
+sphere45	4	1	1500
+sphere46	4	1	2000
+sphere47	4	1	2500
+sphere48	4	1	1000	0.5
+sphere49	4	1	1000	0.1
+sphere50	4	1	1000	0.05
+sphere51	4	1	1000	0.025
+sphere54	4	1	1000	0.5	Lmax=511
+sphere55	4	1	1000	0.1	Lmax=511
+sphere56	4	1	1000	0.05	Lmax=511
+sphere57	4	1	1000	0.1	Random Seed
+sphere58	4	1	1000	0.1	Random Seed
+sphere57	4	1	1000	0.1	Random Seed
+sphere58	4	1	1000	0.1	Random Seed
+sphere59	4	1	1000	0.1	Random Seed
+sphere60	4	1	1000	0.1	Random Seed
+sphere61	4	1	1000	0.1	Random Seed
+sphere62	4	1	100	0.1	
+sphere63	4	1	200	0.1	
+sphere64	4	1	300	0.1	
+sphere64	4	1	300	0.1	
+sphere65	4	1	400	0.1	
+sphere66	4	1	500	0.1	
+sphere67	4	1	600	0.1	
+sphere68	4	1	700	0.1	
+sphere69	4	1	800	0.1	
+sphere70	4	1	900	0.1
+sphere71	12	0.5	1000	0.1	
+sphere72	12	1	1000	0.1	
+sphere73	12	1.5	1000	0.1	
+sphere74	8	0.5	1000	0.1	
+sphere75	8	1	1000	0.1	
+sphere76	8	1.5	1000	0.1	

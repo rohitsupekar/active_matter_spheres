@@ -1,0 +1,24 @@
+Session Name	Lmid	Kappa	f
+sphere1		4	0.5	1000
+sphere2		4	0.5	10000
+sphere3		4	1	1000
+sphere4		4	0.5	10
+sphere5		4	0.5	100
+sphere6		4	1	10
+sphere7		4	1	100
+sphere16	8	1	10
+sphere17	8	1	100
+sphere18	8	1	1000
+sphere19	8	1	10000
+sphere23	2.5	0.35	0
+sphere24	2	0.29	0
+sphere52	4	1	400	0.1
+sphere53	4	1	600	0.1
+sphere52	4	1	400	0.1
+sphere53	4	1	600	0.1
+sphere58	4	1	1000	0.1
+sphere59	4	1	1000	0.1
+sphere58	4	1	1000	0.5
+sphere58	4	1	1000	0.5
+sphere58	4	1	1000	0.5
+sphere57	4	1	1000	0.1

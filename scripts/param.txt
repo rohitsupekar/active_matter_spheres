@@ -1,0 +1,55 @@
+Session Name	Lmid	Kappa	f
+sphere1		4	0.5	1000
+sphere2		4	0.5	10000
+sphere3		4	1	1000
+sphere4		4	0.5	10
+sphere5		4	0.5	100
+sphere6		4	1	10
+sphere7		4	1	100
+sphere8		4	1.5	10
+sphere9		4	1.5	100
+sphere10	4	1.5	1000
+sphere11	4	1.5	250
+sphere12	4	1.5	400
+sphere13	4	1.5	550
+sphere14	4	1.5	700
+sphere15	4	1.5	850
+sphere16	8	1	10
+sphere17	8	1	100
+sphere18	8	1	1000
+sphere19	8	1	10000	Fail
+sphere20	8	1	10000	Fail	
+sphere21	8	1	10000	
+sphere22	2	0.5	0
+sphere23	2.5	0.35	0
+sphere24	2	0.29	0
+sphere25	4	0.5	250
+sphere26	4	0.5	400
+sphere27	4	0.5	550
+sphere28	4	0.5	700
+sphere29	4	0.5	850
+sphere30	4	0.5	1000
+sphere31	4	1	1000
+sphere32	4	0.5	1000
+sphere33	4	1	1000
+sphere34	4	0.5	1000
+sphere35	4	1	1000
+sphere36	4	0.5	1000
+sphere37	4	1	1000
+sphere38	4	0.6	1000
+sphere39	4	0.7	1000
+sphere40	4	0.8	1000
+sphere41	4	0.9	1000
+sphere42	4	1.1	1000
+sphere43	4	1.2	1000
+sphere44	4	1	1000 Smaller Time step 
+sphere45	4	1	1500
+sphere46	4	1	2000
+sphere47	4	1	2500
+sphere48	4	1	1000	0.5
+sphere49	4	1	1000	0.1
+sphere50	4	1	1000	0.05
+sphere51	4	1	1000	0.025
+sphere54	4	1	1000	0.5	Lmax=511
+sphere55	4	1	1000	0.1	Lmax=511
+sphere56	4	1	1000	0.05	Lmax=511
