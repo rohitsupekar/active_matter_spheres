@@ -3,9 +3,11 @@ plots/
 garbage/
 videos/
 __pycache__/
+jupyter/
 
 *.mp4
 *.png
 *.eps
 *.pdf
 *.out 
+*.ipynb
