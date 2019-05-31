@@ -1,0 +1,10 @@
+data/
+plots/
+garbage/
+videos/
+__pycache__/
+
+*.mp4
+*.png
+*.eps
+*.pdf
