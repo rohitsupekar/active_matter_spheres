@@ -63,3 +63,6 @@ sphere73	12	1.5	1000	0.1
 sphere74	8	0.5	1000	0.1	
 sphere75	8	1	1000	0.1	
 sphere76	8	1.5	1000	0.1	
+sphere77	4	1	0	0.1	inertial simulation
+sphere77	4	1	0	0.1	inertial simulation
+sphere77	4	1	0	0.1	inertial simulation

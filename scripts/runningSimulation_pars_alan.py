@@ -27,8 +27,8 @@ Lmid = float(sys.argv[1])   #gives 1/10 as characteristic diameter for the vorti
 kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
-randInitialCond = False #set to True for a random initial condition, else constant rotation
-finertial = 100
+isInertialRot = True #set to True for an initial rotation of f_inertial/2 in the inertial frame
+f_inertial = 300
 
 logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 
@@ -47,7 +47,7 @@ Amp = 1e-2  # initial noise amplitude
 #factor = 0.5   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
 factor = float(sys.argv[4])
 dt = factor/(100)
-n_iterations = int(10000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(2000/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(5/factor)  # data output cadence
 n_clean = 10
 output_folder = sys.argv[5]  # data output folder
@@ -84,26 +84,26 @@ phi_flat = simplesphere.phi_grid.ravel()
 theta_flat = simplesphere.global_theta_grid.ravel()
 
 # Initial conditions
-if randInitialCond==True:
-    # Add random perturbations to the velocity coefficients
-    v = model.v
-    seed0 = np.random.randint(0, 1000)
-    logger.info("seed0 = %i" %(seed0))
-    rand = np.random.RandomState(seed=seed0+rank)
-    for dm, m in enumerate(simplesphere.local_m):
-        shape = v.coeffs[dm].shape
-        noise = rand.standard_normal(shape)
-        phase = rand.uniform(0,2*np.pi,shape)
-        v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
-    state_system.pack_coeffs()
-else:
-    v = model.v
+v = model.v
+
+if isInertialRot==True:
     theta, phi = np.meshgrid(theta_flat, phi_flat)
     #set v_phi to Omega*sin(theta)
-    v.component_fields[1]['g'] = f_inertial*np.sin(theta)
+    v.component_fields[1]['g'] = (f_inertial/2)*np.sin(theta)
+    v.forward_phi()
+    v.forward_theta()
 
+# Add random perturbations to the velocity coefficients
+seed0 = np.random.randint(0, 1000)
+logger.info("seed0 = %i" %(seed0))
+rand = np.random.RandomState(seed=seed0+rank)
+for dm, m in enumerate(simplesphere.local_m):
+    shape = v.coeffs[dm].shape
+    noise = rand.standard_normal(shape)
+    phase = rand.uniform(0,2*np.pi,shape)
+    v.coeffs[dm] += Amp * noise*np.exp(1j*phase)
 
-
+state_system.pack_coeffs()
 
 # Setup outputs
 file_num = 1
