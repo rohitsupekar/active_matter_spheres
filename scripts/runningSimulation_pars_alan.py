@@ -27,6 +27,8 @@ Lmid = float(sys.argv[1])   #gives 1/10 as characteristic diameter for the vorti
 kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
+randInitialCond = False #set to True for a random initial condition, else constant rotation
+finertial = 100
 
 logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 
@@ -78,25 +80,36 @@ for dm, m in enumerate(simplesphere.local_m):
         Am = spla.splu(Am.tocsc(), permc_spec=PERMC_SPEC)
     A.append(Am)
 
+phi_flat = simplesphere.phi_grid.ravel()
+theta_flat = simplesphere.global_theta_grid.ravel()
+
 # Initial conditions
-# Add random perturbations to the velocity coefficients
-v = model.v
-seed0 = np.random.randint(0, 1000)
-logger.info("seed0 = %i" %(seed0))
-rand = np.random.RandomState(seed=seed0+rank)
-for dm, m in enumerate(simplesphere.local_m):
-    shape = v.coeffs[dm].shape
-    noise = rand.standard_normal(shape)
-    phase = rand.uniform(0,2*np.pi,shape)
-    v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
-state_system.pack_coeffs()
+if randInitialCond==True:
+    # Add random perturbations to the velocity coefficients
+    v = model.v
+    seed0 = np.random.randint(0, 1000)
+    logger.info("seed0 = %i" %(seed0))
+    rand = np.random.RandomState(seed=seed0+rank)
+    for dm, m in enumerate(simplesphere.local_m):
+        shape = v.coeffs[dm].shape
+        noise = rand.standard_normal(shape)
+        phase = rand.uniform(0,2*np.pi,shape)
+        v.coeffs[dm] = Amp * noise*np.exp(1j*phase)
+    state_system.pack_coeffs()
+else:
+    v = model.v
+    theta, phi = np.meshgrid(theta_flat, phi_flat)
+    #set v_phi to Omega*sin(theta)
+    v.component_fields[1]['g'] = f_inertial*np.sin(theta)
+
+
+
 
 # Setup outputs
 file_num = 1
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
-phi_flat = simplesphere.phi_grid.ravel()
-theta_flat = simplesphere.global_theta_grid.ravel()
+
 
 # Main loop
 end_init_time = time.time()
