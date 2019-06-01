@@ -28,13 +28,13 @@ proj = ccrs.PlateCarree(central_longitude=0)#, central_latitude=30)
 proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
-fields = ['om']
+fields = ['v_ph']
 #input_folder = sys.argv[1]
 #output_folder = sys.argv[2]
-STRNAME = "sphere74"
+STRNAME = "sphere77"
 input_folder = "data/%s" %(STRNAME)
 output_folder = "videos"
-Omega = 500
+Omega = 5
 
 #count files in the input folder
 last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
@@ -46,7 +46,7 @@ if comm.rank == 0:
 comm.barrier()
 
 # Setup figure projection
-fig, axs = plt.subplots(1,3, figsize=figsize, subplot_kw={'projection': proj})
+fig, axs = plt.subplots(1,1, figsize=figsize, subplot_kw={'projection': proj})
 #axes = plt.axes((0, 0, 1, 1), projection=proj)
 
 #set clims for all the fields
@@ -61,13 +61,12 @@ for field in fields:
 for field in fields:
     clims[field] = 0.75*max_vals[field]
 
-print('blah')
 metadata = dict(title='Fields Movie', artist='Matplotlib', comment='Movie support!')
 writer = FFMpegWriter(fps=15, metadata=metadata)
 
 for field in fields:
 
-    with writer.saving(fig, "%s/%s_%s_mod.mp4" %(output_folder, STRNAME, field), dpi):
+    with writer.saving(fig, "%s/%s_%s_inertial.mp4" %(output_folder, STRNAME, field), dpi):
         for i in range(first_frame + comm.rank, last_frame + 1, comm.size):
 
             # Load data
@@ -82,7 +81,7 @@ for field in fields:
                 time = file['t'][0]
 
                 data = file[field]
-                signs = [0, -1, 1]
+                signs = [1]
                 count = 0
                 for axes in axs:
                     sign = signs[count]; count += 1
@@ -99,7 +98,7 @@ for field in fields:
 
                     axes.set_global()
                     axes.outline_patch.set_edgecolor(edgecolor)
-                    axes.set_title('%i'%(sign))
+                    #axes.set_title('%i'%(sign))
                     # Update plot
                     #else:
                     #    image.set_array(data.T.ravel())

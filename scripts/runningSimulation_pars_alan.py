@@ -19,7 +19,7 @@ PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 255  # Spherical harmonic order
+L_max = 127  # Spherical harmonic order
 S_max = 4  # Spin order (leave fixed)
 
 # Model parameters
@@ -28,7 +28,7 @@ kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
 isInertialRot = True #set to True for an initial rotation of f_inertial/2 in the inertial frame
-f_inertial = 300
+f_inertial = 50
 
 logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 

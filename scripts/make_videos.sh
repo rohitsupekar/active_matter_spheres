@@ -4,8 +4,8 @@ SESNAME="sphere"
 
 ### SIMULATION PARAMETERS ###
 
-IND=( 30 )
-FIELD="om_coeffs"
+IND=( 77 )
+FIELD="v_ph"
 
 for (( l = 0 ; l < ${#IND[@]} ; l++ )) ; do
 
