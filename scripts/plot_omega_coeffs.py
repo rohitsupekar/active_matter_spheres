@@ -67,7 +67,7 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
         if ind%10==0: logger.info("Frame: %i" %(ind))
 
         with np.load(os.path.join(input_folder, 'output_%i.npz' %(ind))) as file:
-            if ind == first_frame + comm.rank + 1:
+            if ind == first_frame + comm.rank +1:
                 phi = file['phi']
                 theta = file['theta']
                 L_max = len(theta)-1
