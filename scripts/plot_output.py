@@ -1,12 +1,18 @@
-import glob
+import os
 import sys
+import glob
+import time
+import pathlib
 import numpy as np
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+from scipy.sparse import linalg as spla
+from dedalus.tools.config import config
+from simple_sphere import SimpleSphere, TensorField, TensorSystem
+import equations
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
 import cartopy.crs as ccrs
 from dedalus.extras import plot_tools
 import logging
