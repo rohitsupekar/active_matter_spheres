@@ -5,9 +5,10 @@ videos/
 __pycache__/
 jupyter/
 
+scripts/*out
 *.mp4
 *.png
 *.eps
 *.pdf
-*.out 
+*out 
 *.ipynb
