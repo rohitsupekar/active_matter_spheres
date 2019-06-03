@@ -27,7 +27,7 @@ proj = ccrs.PlateCarree(central_longitude=0)#, central_latitude=30)
 proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
-fields = ['v_ph', 'om']
+fields = ['v_ph', 'om', 'v_th']
 sim_number = int(sys.argv[1])
 input_folder = sys.argv[2]
 output_folder = sys.argv[3]
@@ -63,7 +63,7 @@ for field in fields:
             if i%10==0: logger.info('Frame: %i' %(i))
 
             with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
-                if i == first_frame + comm.rank:
+                if i == first_frame + comm.rank+1:
                     phi = file['phi']
                     theta = file['theta']
                 time = file['t'][0]

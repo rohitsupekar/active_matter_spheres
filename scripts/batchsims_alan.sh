@@ -19,7 +19,7 @@ LL=( 4 )
 kk=( 1 )
 ff=( 50 )
 facfac=( 0.1 )
-NOTE="" #add anything special about these simulations, else leave empty
+NOTE="noise amp = 1e-3" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
 declare -i ncores=8
