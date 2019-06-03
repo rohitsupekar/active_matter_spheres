@@ -44,7 +44,7 @@ comm.barrier()
 max_vals = {key: 0 for key in fields}
 clims = {key: 0 for key in fields}
 for field in fields:
-    for i in range(first_frame + comm.rank, last_frame + 1, comm.size):
+    for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
         with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
             fieldval = file[field]
             max_vals[field] = max(max_vals[field], np.max(fieldval))
