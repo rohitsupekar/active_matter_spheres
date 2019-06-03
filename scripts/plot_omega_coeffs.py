@@ -63,7 +63,7 @@ writer = FFMpegWriter(fps=FPS, metadata=metadata)
 
 with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number), dpi):
 
-    for ind in range(first_frame + comm.rank, last_frame + 1, comm.size):
+    for ind in range(first_frame + comm.rank + 1, last_frame + 1, comm.size):
         if ind%10==0: logger.info("Frame: %i" %(ind))
 
         with np.load(os.path.join(input_folder, 'output_%i.npz' %(ind))) as file:
@@ -98,7 +98,7 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
         ell = np.arange(0,L_max+1)
         ellell, mm = np.meshgrid(ell, m)
 
-        if ind == first_frame + comm.rank:
+        if ind == first_frame + comm.rank +1:
             title = fig.suptitle('t = %.4f' %time)
 
             image0 = ax[0].pcolormesh(phi, theta, om.T, cmap='RdBu_r')

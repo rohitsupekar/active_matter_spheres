@@ -58,7 +58,7 @@ for field in fields:
     axes = plt.axes((0.1, 0.1, 0.8, 0.8), projection=proj)
 
     with writer.saving(fig, "%s/sphere%i_%s.mp4" %(output_folder, sim_number, field), dpi):
-        for i in range(first_frame + comm.rank, last_frame + 1, comm.size):
+        for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
 
             if i%10==0: logger.info('Frame: %i' %(i))
 
@@ -72,7 +72,7 @@ for field in fields:
                 data = file[field]
 
                 # Create plot
-                if i == first_frame + comm.rank:
+                if i == first_frame + comm.rank + 1:
                     lon = (phi + phi[1]/2 - np.pi) * 180 / np.pi
                     lat = (np.pi/2 - theta) * 180 / np.pi
                     xmesh, ymesh = plot_tools.quad_mesh(lon, lat)
