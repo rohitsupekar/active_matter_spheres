@@ -33,16 +33,17 @@ input_folder = sys.argv[2]
 output_folder = sys.argv[3]
 FPS = int(sys.argv[4])
 
-
 #count files in the input folder
 last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
+logger.info('Total number of frames: %i' %(last_frame))
 
 #set clims for all the fields
 max_vals = {key: 0 for key in fields}
 clims = {key: 0 for key in fields}
-for field in fields:
-    for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
-        with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
+logger.info('Find max values..')
+for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
+    with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
+        for field in fields:
             fieldval = file[field]
             max_vals[field] = max(max_vals[field], np.max(fieldval))
 
