@@ -65,5 +65,13 @@ sphere75	8	1	1000	0.1
 sphere76	8	1.5	1000	0.1	
 sphere77	4	1	0	0.1	inertial simulation f_inertial=10
 sphere78	4	1	0	0.01	inertial simulation f_inertial=50
-
 sphere79	4	1	50	0.1	noise amp = 1e-3
+sphere80	4	1	50	0.1	noise amp = 1e-2
+
+sphere81	4	1	0	0.01	inertial simulation f_inertial=20
+sphere81	4	1	0	0.01	inertial simulation f_inertial=20
+sphere81	4	1	0	0.01	inertial simulation f_inertial=20
+sphere82	4	1	20	0.1	
+sphere83	4	1	50	0.1	changed sign in equations.py
+sphere84	4	1	50	0.1	changed sign in equations.py
+sphere85	4	1	50	0.1	changed sign in equations.py
