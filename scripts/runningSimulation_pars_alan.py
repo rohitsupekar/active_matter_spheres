@@ -19,7 +19,7 @@ PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 255  # Spherical harmonic order
+L_max = 127  # Spherical harmonic order
 S_max = 4  # Spin order (leave fixed)
 
 # Model parameters
@@ -27,8 +27,8 @@ Lmid = float(sys.argv[1])   #gives 1/10 as characteristic diameter for the vorti
 kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
-isInertialRot = False #set to True for an initial rotation of f_inertial/2 in the inertial frame
-f_inertial = 50
+isInertialRot = True #set to True for an initial rotation of f_inertial/2 in the inertial frame
+f_inertial = 40
 
 logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 
@@ -43,11 +43,11 @@ e2 = c/(a-b)
 params = [gamma, e0, e1, e2, fspin]
 
 # Integration parameters
-Amp = 1e-3  # initial noise amplitude
+Amp = 1e-2  # initial noise amplitude
 #factor = 0.5   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
 factor = float(sys.argv[4])
 dt = factor/(100)
-n_iterations = int(50000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(2000/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(5/factor)  # data output cadence
 n_clean = 10
 output_folder = sys.argv[5]  # data output folder
@@ -83,18 +83,22 @@ for dm, m in enumerate(simplesphere.local_m):
 phi_flat = simplesphere.phi_grid.ravel()
 theta_flat = simplesphere.global_theta_grid.ravel()
 
+#mutlidimensional grids
+phi_grid = simplesphere.phi_grid.ravel()
+theta_grid = simplesphere.local_theta_grid.ravel()
+
 # Initial conditions
 v = model.v
 
 if isInertialRot==True:
-    theta, phi = np.meshgrid(theta_flat, phi_flat)
     #set v_phi to Omega*sin(theta)
-    v.component_fields[1]['g'] = (f_inertial/2)*np.sin(theta)
+    v.component_fields[1]['g'] = (f_inertial/2)*np.sin(theta_grid)
     v.forward_phi()
     v.forward_theta()
 
 # Add random perturbations to the velocity coefficients
-seed0 = np.random.randint(0, 1000)
+#seed0 = np.random.randint(0, 1000)
+seed0 = 42
 logger.info("seed0 = %i" %(seed0))
 rand = np.random.RandomState(seed=seed0+rank)
 for dm, m in enumerate(simplesphere.local_m):
