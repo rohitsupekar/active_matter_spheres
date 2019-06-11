@@ -72,3 +72,10 @@ sphere82	4	1	20	0.1
 sphere83	4	1	50	0.1	changed sign in equations.py
 sphere84	4	1	50	0.1	changed sign in equations.py
 sphere85	4	1	50	0.1	changed sign in equations.py
+sphere86	4	1	30	0.01
+sphere87	4	1	40	0.01
+sphere88	4	1	0	0.01	inertial (f_inertial = 30)
+sphere89	4	1	0	0.01	inertial (f_inertial = 40)
+sphere90	4	1	0	0.01	inertial (f_inertial = 50)
+sphere91	4	1	50	0.01	
+sphere92	4	1	0	0.01	inertial (f_inertial = 40) no activity
