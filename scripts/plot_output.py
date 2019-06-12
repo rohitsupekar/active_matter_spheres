@@ -33,7 +33,7 @@ proj = ccrs.PlateCarree(central_longitude=0)#, central_latitude=30)
 proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
-fields = ['v_ph', 'om', 'v_th']
+fields = ['v_ph', 'om']
 sim_number = int(sys.argv[1])
 input_folder = sys.argv[2]
 output_folder = sys.argv[3]
