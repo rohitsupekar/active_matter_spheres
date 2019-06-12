@@ -27,8 +27,8 @@ Lmid = float(sys.argv[1])   #gives 1/10 as characteristic diameter for the vorti
 kappa = float(sys.argv[2])  #spectral injection bandwidth
 fspin = float(sys.argv[3])  #rotation
 gamma = 1  # surface mass density
-isInertialRot = True #set to True for an initial rotation of f_inertial/2 in the inertial frame
-f_inertial = 40
+isInertialRot = (sys.argv[6] == 'True') #set to True for an initial rotation of f_inertial/2 in the inertial frame
+if isInertialRot: f_inertial = fspin; fspin = 0
 
 logger.info('Simulation params: Lmid = %.3f, kappa = %.3f, f = %.3f' %(Lmid, kappa, fspin))
 

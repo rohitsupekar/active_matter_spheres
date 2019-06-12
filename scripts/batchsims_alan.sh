@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -i k0=79 #start counter of folders
+declare -i k0=93 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
@@ -17,9 +17,10 @@ FRATE=15 #frame rate for making the video
 
 LL=( 4 )
 kk=( 1 )
-ff=( 50 )
-facfac=( 0.1 )
-NOTE="noise amp = 1e-3" #add anything special about these simulations, else leave empty
+ff=( 0.1 1 )
+facfac=( 0.01 )
+isInertial=True
+NOTE="inertial simulation" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
 declare -i ncores=8
@@ -80,7 +81,7 @@ for (( l = 0 ; l < ${#LL[@]} ; l++ )) ; do
 
           echo -e 'Started: '$SESNAME$k'\t''L='${LL[$l]}'\t''kappa='${kk[$m]}'\t''f='${ff[$n]}'\t''factor='${facfac[$o]}
           # run Dedalus script
-          mpiexec -n $ncores python3 $RUNSCRIPT ${LL[$l]} ${kk[$m]} ${ff[$n]} ${facfac[$o]} data/$SESNAME$k > $SESNAME$k'.out' 2>&1
+          mpiexec -n $ncores python3 $RUNSCRIPT ${LL[$l]} ${kk[$m]} ${ff[$n]} ${facfac[$o]} data/$SESNAME$k $isInertial > $SESNAME$k'.out' 2>&1
 
           # wait for processes to be done
           wait
