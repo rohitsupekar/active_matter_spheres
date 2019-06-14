@@ -80,3 +80,13 @@ sphere90	4	1	0	0.01	inertial (f_inertial = 50)
 sphere91	4	1	50	0.01	
 sphere92	4	1	0	0.01	inertial (f_inertial = 40) no activity
 sphere93	4	1	0.1	0.01	inertial simulation
+sphere94	4	1	1	0.01	inertial simulation
+sphere95	4	1	0.1	0.01	
+sphere96	4	1	1	0.01	
+sphere97	4	1	10	0.01	
+sphere98	4	1	10	0.01	
+sphere99	4	1	20	0.01	
+sphere99	4	1	20	0.01	inertial simulation
+sphere100	4	1	20	0.01	
+sphere101	4	1	200	0.001	inertial simulation	
+sphere102	4	1	30	0.001	inertial simulation	
