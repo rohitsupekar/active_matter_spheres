@@ -12,3 +12,4 @@ scripts/*out
 *.pdf
 *out 
 *.ipynb
+.nfs*
