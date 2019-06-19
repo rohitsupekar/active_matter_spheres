@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -i k0=102 #start counter of folders
+declare -i k0=103 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
@@ -17,13 +17,13 @@ FRATE=15 #frame rate for making the video
 
 LL=( 4 )
 kk=( 1 )
-ff=( 30 )
-facfac=( 0.001 )
+ff=( 300 )
+facfac=( 0.00006 )
 isInertial=True
-NOTE="" #add anything special about these simulations, else leave empty
+NOTE="Inertial Simulation" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
-declare -i ncores=8
+declare -i ncores=24
 
 ### Make files and folders if they don't exist ###
 
