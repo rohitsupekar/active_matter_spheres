@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -i k0=102 #start counter of folders
+declare -i k0=104 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
@@ -17,9 +17,9 @@ FRATE=15 #frame rate for making the video
 
 LL=( 4 )
 kk=( 1 )
-ff=( 30 )
-facfac=( 0.001 )
-isInertial=True
+ff=( 300 )
+facfac=( 0.1 )
+isInertial=False
 NOTE="" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
@@ -96,8 +96,6 @@ for (( l = 0 ; l < ${#LL[@]} ; l++ )) ; do
 
           python3 $RUNSCRIPTCOEFFS $k $FRATE > $SESNAME$k'_coeffs.out' 2>&1
           wait
-
-          #echo "Making video.."
 
           #remove files if they already exist
           #rm videos/$SESNAME$k'_v_ph.mp4'

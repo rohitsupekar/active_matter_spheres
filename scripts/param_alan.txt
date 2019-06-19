@@ -89,4 +89,8 @@ sphere99	4	1	20	0.01
 sphere99	4	1	20	0.01	inertial simulation
 sphere100	4	1	20	0.01	
 sphere101	4	1	200	0.001	inertial simulation	
-sphere102	4	1	30	0.001	inertial simulation	
+sphere102	4	1	30	0.001	inertial simulation
+	
+sphere103	4	1	300	0.00006	inertial simulation
+sphere103	4	1	300	0.00006	inertial simulation
+sphere104	4	1	300	0.1	
