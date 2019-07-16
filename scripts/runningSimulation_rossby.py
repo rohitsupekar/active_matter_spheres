@@ -41,9 +41,12 @@ e0 = a*c/(a-b)
 e1 = 2*np.sqrt(b)*c/(a-b)
 e2 = c/(a-b)
 
-e0, e1, e2 = 1e-10, 0, 0
-ell0 = [3, 4, 5, 6, 7]
-m0 = [3, 4, 5, 6, 7]
+e0, e1, e2 = 1e-15, 0, 0
+v0 = 0.01
+ell0 = [4, 5, 6, 7]
+m0 = [2, 3, 4]
+#ell0 = [6]
+#m0 = [1, 2, 3, 4, 5, 6]
 
 params = [gamma, e0, e1, e2, fspin]
 
@@ -52,7 +55,7 @@ Amp = 1e-2  # initial noise amplitude
 #factor = 0.5   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
 factor = float(sys.argv[4])
 dt = factor/(100)
-n_iterations = int(300/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(500/factor)# total iterations. Change 10000 to higher number for longer run!
 n_output = int(1/factor)  # data output cadence
 n_clean = 10
 output_folder = sys.argv[5]  # data output folder
@@ -111,7 +114,8 @@ for dm, m in enumerate(simplesphere.local_m):
 #    noise = rand.standard_normal(shape)
 #    phase = rand.uniform(0,2*np.pi,shape)
     if m in m0:
-        v.coeffs[dm][ell0[m0.index(m)] - m] = 1
+        for ell in ell0:
+            v.coeffs[dm][ell - m] = v0
 
 state_system.pack_coeffs()
 

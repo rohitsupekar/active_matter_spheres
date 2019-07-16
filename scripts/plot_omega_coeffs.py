@@ -33,7 +33,8 @@ last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
 dpi = 300
 FPS = int(sys.argv[2])
 fields = ['om']
-ell_max = 50 #for plotting
+ell_max = 15 #for plotting
+marker_size = 20
 
 # Setup output folder
 if comm.rank == 0:
@@ -94,6 +95,9 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
         mag = np.abs(coeffs_arr)
         phase = np.angle(coeffs_arr)
 
+        if ind == first_frame + comm.rank +1:
+            mag_fac = marker_size/np.max(mag)
+
         m = np.arange(0,L_max+1)
         ell = np.arange(0,L_max+1)
         ellell, mm = np.meshgrid(ell, m)
@@ -108,7 +112,7 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
             fig.colorbar(image0, ax=ax[0])
             image0.set_clim(-clims['om'], clims['om'])
 
-            image1 = ax[1].scatter(mm.flatten(), ellell.flatten(), 2*mag.flatten(), c=phase.flatten(), cmap='hsv', edgecolor='none')
+            image1 = ax[1].scatter(mm.flatten(), ellell.flatten(), mag_fac*mag.flatten(), c=phase.flatten(), cmap='hsv', edgecolor='none')
             ax[1].set_xlim(-1, ell_max), ax[1].set_ylim(-1, ell_max)
             ax[1].set_xlabel('$m$'), ax[1].set_ylabel('$\ell$')
             ax[1].set_title('$\hat{\omega}_{\ell, m}$',fontsize=15)
@@ -118,7 +122,7 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
         else:
             title.set_text('t = %.4f' %time)
             image0.set_array(om.T.ravel())
-            image1.set_sizes(2*mag.flatten())
+            image1.set_sizes(mag_fac*mag.flatten())
             image1.set_array(phase.flatten())
 
         writer.grab_frame()
