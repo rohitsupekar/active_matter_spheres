@@ -3,7 +3,6 @@ plots/
 garbage/
 videos/
 __pycache__/
-jupyter/
 
 scripts/*out
 *.mp4
@@ -11,5 +10,4 @@ scripts/*out
 *.eps
 *.pdf
 *out 
-*.ipynb
 .nfs*
