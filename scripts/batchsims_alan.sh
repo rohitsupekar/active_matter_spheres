@@ -1,14 +1,14 @@
 #!/bin/bash
 
 
-declare -i k0=107 #start counter of folders
+declare -i k0=109 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
 
 SESNAME="sphere"
 PARNAME="param_alan"
-RUNSCRIPT="runningSimulation_rossby.py"
+RUNSCRIPT="runningSimulation_pars_alan.py"
 RUNSCRIPTCOEFFS="plot_omega_coeffs.py"
 FIELD="om_coeffs"
 
@@ -18,10 +18,10 @@ FRATE=15 #frame rate for making the video
 
 LL=( 4 )
 kk=( 1 )
-ff=( 100 )
+ff=( 500 1000 )
 facfac=( 0.1 )
 isInertial=False
-NOTE="Testing Rossby Waves" #add anything special about these simulations, else leave empty
+NOTE="Saving at higher frequency" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
 declare -i ncores=8

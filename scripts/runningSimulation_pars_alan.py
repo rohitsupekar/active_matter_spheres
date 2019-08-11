@@ -19,7 +19,7 @@ PERMC_SPEC = config['linear algebra']['permc_spec']
 USE_UMFPACK = config['linear algebra'].getboolean('use_umfpack')
 
 # Discretization parameters
-L_max = 127  # Spherical harmonic order
+L_max = 255  # Spherical harmonic order
 S_max = 4  # Spin order (leave fixed)
 
 # Model parameters
@@ -47,8 +47,8 @@ Amp = 1e-2  # initial noise amplitude
 #factor = 0.5   #controls the time step below to be 0.5/(100), which is 0.5/100 of characteristic vortex dynamics time
 factor = float(sys.argv[4])
 dt = factor/(100)
-n_iterations = int(2000/factor)# total iterations. Change 10000 to higher number for longer run!
-n_output = int(5/factor)  # data output cadence
+n_iterations = int(5000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_output = int(1/factor)  # data output cadence
 n_clean = 10
 output_folder = sys.argv[5]  # data output folder
 
