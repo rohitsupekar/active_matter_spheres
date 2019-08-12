@@ -96,3 +96,4 @@ sphere104	4	1	300	0.1
 sphere108	4	1	100	0.1	Testing Rossby Waves (ell=6, m=1,2,3,4,5,6)
 sphere107	4	1	100	0.1	Testing Rossby Waves (ell=4,5,6,7, m=2,3,4)
 sphere109	4	1	500	0.1	Saving at higher frequency
+sphere110	4	1	1000	0.1	Saving at higher frequency
