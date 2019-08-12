@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 first_frame = 1
 #last_frame = 8
 figsize = (3, 3)
-dpi = 300
+dpi = 200
 show_time = True
 gridlines = True
 coastlines = False
@@ -57,7 +57,7 @@ for field in fields:
     clims[field] = 0.75*max_vals[field]
 
 metadata = dict(title='Movie', artist='Matplotlib', comment='Movie support!')
-writer = FFMpegWriter(fps=FPS, metadata=metadata)
+writer = FFMpegWriter(fps=FPS, bitrate=-1, metadata=metadata)
 
 for field in fields:
 
