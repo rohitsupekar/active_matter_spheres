@@ -39,6 +39,8 @@ input_folder = sys.argv[2]
 output_folder = sys.argv[3]
 FPS = int(sys.argv[4])
 
+step = 3 #data frames to skip per video frame
+
 #count files in the input folder
 last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
 logger.info('Total number of frames: %i' %(last_frame))
@@ -65,7 +67,7 @@ for field in fields:
     axes = plt.axes((0.1, 0.1, 0.8, 0.8), projection=proj)
 
     with writer.saving(fig, "%s/sphere%i_%s.mp4" %(output_folder, sim_number, field), dpi):
-        for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
+        for i in range(first_frame + comm.rank+1, last_frame + 1, step):
 
             if i%10==0: logger.info('Frame: %i' %(i))
 
