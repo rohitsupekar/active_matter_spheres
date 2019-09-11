@@ -4,8 +4,6 @@ import glob
 import time
 import pathlib
 import numpy as np
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
 from scipy.sparse import linalg as spla
 from dedalus.tools.config import config
 from simple_sphere import SimpleSphere, TensorField, TensorSystem
@@ -49,7 +47,7 @@ logger.info('Total number of frames: %i' %(last_frame))
 max_vals = {key: 0 for key in fields}
 clims = {key: 0 for key in fields}
 logger.info('Find max values..')
-for i in range(first_frame + comm.rank+1, last_frame + 1, comm.size):
+for i in range(first_frame + 1, last_frame + 1, 1):
     with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
         for field in fields:
             fieldval = file[field]
@@ -67,12 +65,12 @@ for field in fields:
     axes = plt.axes((0.1, 0.1, 0.8, 0.8), projection=proj)
 
     with writer.saving(fig, "%s/sphere%i_%s.mp4" %(output_folder, sim_number, field), dpi):
-        for i in range(first_frame + comm.rank+1, last_frame + 1, step):
+        for i in range(first_frame + 1, last_frame + 1, step):
 
             if i%10==0: logger.info('Frame: %i' %(i))
 
             with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
-                if i == first_frame + comm.rank+1:
+                if i == first_frame + 1:
                     phi = file['phi']
                     theta = file['theta']
                 time = file['t'][0]
@@ -81,7 +79,7 @@ for field in fields:
                 data = file[field]
 
                 # Create plot
-                if i == first_frame + comm.rank + 1:
+                if i == first_frame +  1:
                     lon = (phi + phi[1]/2 - np.pi) * 180 / np.pi
                     lat = (np.pi/2 - theta) * 180 / np.pi
                     xmesh, ymesh = plot_tools.quad_mesh(lon, lat)
