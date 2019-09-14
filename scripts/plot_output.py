@@ -17,12 +17,11 @@ import logging
 from matplotlib.animation import FFMpegWriter
 logger = logging.getLogger(__name__)
 
-
 # Parameters
 first_frame = 1
 #last_frame = 8
 figsize = (3, 3)
-dpi = 200
+dpi = 300
 show_time = True
 gridlines = True
 coastlines = False
