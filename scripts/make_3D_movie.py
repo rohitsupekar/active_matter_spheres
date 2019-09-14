@@ -16,12 +16,13 @@ input_folder = "data/"
 output_folder = "plots"
 dpi=300
 run_name = 'sphere110'
+save_name = 'double_angle'
 offscreen = True
 
 mlab.options.offscreen = offscreen
 
 ind_start = 200
-ind_end = 5000
+ind_end = 3800
 
 with np.load(os.path.join(input_folder, 'sphere110/output_%i.npz' %(ind_start))) as file:
     om = file['om']
@@ -49,10 +50,23 @@ mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(1500, 1500))
 mlab.clf()
 plot = mlab.mesh(x, y, z, scalars=om, colormap='RdBu', resolution=20, vmin=-120, vmax=120)
 
+
 start_angle = 70
+end_angle = 10
 start_dist = 1.7
+end_dist = 1.2
 degs_per_ind = 0.014
 dist_per_ind = 0.0001
+
+deg_arr = np.zeros(ind_end-ind_start+1)
+n_inds = len(deg_arr)
+n_half = int(n_inds/2)
+deg_arr[0:n_half] = np.linspace(start_angle, end_angle, n_half)
+deg_arr[n_half:] = np.linspace(end_angle, start_angle, n_inds-n_half)
+
+dist_arr = np.zeros_like(deg_arr)
+dist_arr[0:n_half] = np.linspace(start_dist, end_dist, n_half)
+dist_arr[n_half:] = np.linspace(end_dist, start_dist, n_inds-n_half)
 
 mlab.view(-90, start_angle, distance=start_dist)
 
@@ -82,19 +96,21 @@ for count, ind in enumerate(range(ind_start,ind_end)):
         time = file['t'][0]
         print('time=%f' %time)
 
-    if time>7:
-        deg = start_angle - degs_per_ind*(count-count0)
-        dist = start_dist - dist_per_ind*(count-count0)
-    else:
-        deg = start_angle
-        dist = start_dist
-        count0 = count
+    #if time>7:
+    #    deg = start_angle - degs_per_ind*(count-count0)
+    #    dist = start_dist - dist_per_ind*(count-count0)
+    #else:
+    #    deg = start_angle
+    #    dist = start_dist
+    #    count0 = count
+    deg = deg_arr[count]
+    dist = dist_arr[count]
 
     mlab.view(-90, deg, distance=dist)
 
     plot.mlab_source.set(x=x, y=y, z=z, scalars=om)
     #mlab.title('t=%0.3f' %(time), size=0.5)
-    mlab.savefig('3d_plots/%s_%i.png' %(run_name, count), magnification=1)
+    mlab.savefig('3d_plots/%s_%i.png' %(save_name, count), magnification=1)
     #yield
 
 #anim()
