@@ -21,8 +21,8 @@ offscreen = True
 
 mlab.options.offscreen = offscreen
 
-ind_start = 200
-ind_end = 3800
+ind_start = 800
+ind_end = 3000
 
 with np.load(os.path.join(input_folder, 'sphere110/output_%i.npz' %(ind_start))) as file:
     om = file['om']
