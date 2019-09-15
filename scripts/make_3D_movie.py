@@ -11,12 +11,13 @@ import time
 from mayavi import mlab
 import numpy as np
 
+
 #add path to data folder
 input_folder = "data/"
 output_folder = "plots"
 dpi=300
 run_name = 'sphere110'
-save_name = 'double_angle'
+save_name = 'double_angle1'
 offscreen = True
 
 mlab.options.offscreen = offscreen
