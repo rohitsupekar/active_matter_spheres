@@ -99,3 +99,9 @@ sphere109	4	1	500	0.1	Saving at higher frequency
 sphere110	4	1	1000	0.1	Saving at higher frequency
 sphere111	4	1	0	0.1	Saving at higher frequency
 sphere112	8	1	0	0.1	Saving at higher frequency
+sphere113	2	1	0	0.1	
+sphere114	2	1	500	0.1	
+sphere115	2	1	1000	0.1	
+sphere116	8	1	0	0.1	
+sphere117	8	1	500	0.1	
+sphere118	8	1	1000	0.1	

@@ -30,7 +30,8 @@ proj = ccrs.PlateCarree(central_longitude=0)#, central_latitude=30)
 proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
-fields = ['v_ph', 'om']
+#fields = ['v_ph', 'om']
+fields = ['om']
 sim_number = int(sys.argv[1])
 input_folder = sys.argv[2]
 output_folder = sys.argv[3]
@@ -40,6 +41,7 @@ step = 3 #data frames to skip per video frame
 
 #count files in the input folder
 last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
+last_frame = 200
 logger.info('Total number of frames: %i' %(last_frame))
 
 #set clims for all the fields
@@ -56,7 +58,7 @@ for field in fields:
     clims[field] = 0.75*max_vals[field]
 
 metadata = dict(title='Movie', artist='Matplotlib', comment='Movie support!')
-writer = FFMpegWriter(fps=FPS, bitrate=-1, metadata=metadata)
+writer = FFMpegWriter(fps=FPS, metadata=metadata)
 
 for field in fields:
 
