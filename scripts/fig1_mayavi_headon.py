@@ -16,58 +16,50 @@ input_folder = "data/"
 output_folder = "plots"
 dpi=300
 
-ind1, ind2, ind3 = 10, 200, 900
+ind = 4999 #time ind
 
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere113/output_%i.npz' %(ind))) as file:
     om1 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
+
+with np.load(os.path.join(input_folder, 'sphere114/output_%i.npz' %(ind))) as file:
     om2 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere115/output_%i.npz' %(ind))) as file:
     om3 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere111/output_%i.npz' %(ind))) as file:
     om4 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere109/output_%i.npz' %(ind))) as file:
     om5 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere110/output_%i.npz' %(ind))) as file:
     om6 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
 
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere116/output_%i.npz' %(ind))) as file:
     om7 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere117/output_%i.npz' %(ind))) as file:
     om8 = file['om']
     time = file['t'][0]
     print('time=%f' %time)
 
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
+with np.load(os.path.join(input_folder, 'sphere118/output_%i.npz' %(ind))) as file:
     phi = file['phi']
     theta = file['theta']
     om9 = file['om']
@@ -122,7 +114,7 @@ mlab.view(-90, 90, distance=4)
 #m = mlab.mesh(x+1.4, y, z, scalars=om9, colormap='bwr')
 #mlab.view(-90, 90, distance=1.5)
 
-#mlab.savefig("%s/mayavi_front.pdf" %(output_folder), magnification=100)
+mlab.savefig("%s/mayavi_front.pdf" %(output_folder), magnification=100)
 
 
 mlab.show()
