@@ -15,17 +15,19 @@ import numpy as np
 #add path to data folder
 input_folder = "data/"
 output_folder = "plots"
-dpi=300
-run_name = 'sphere110'
-save_name = 'double_angle1'
+run_name = 'sphere111'
+save_name = 'test'
 offscreen = True
+figsize = (1500, 1500)
+vmax = 25
+#vmax = 120 #for sphere110
 
 mlab.options.offscreen = offscreen
 
-ind_start = 800
-ind_end = 3000
+ind_start = 250
+ind_end = 3340
 
-with np.load(os.path.join(input_folder, 'sphere110/output_%i.npz' %(ind_start))) as file:
+with np.load(os.path.join(input_folder, '%s/output_%i.npz' %(run_name,ind_start))) as file:
     om = file['om']
     time = file['t'][0]
     phi = file['phi']
@@ -47,9 +49,9 @@ x = r * sin(phiphi) * cos(thth)
 y = r * sin(phiphi) * sin(thth)
 z = r * cos(phiphi)
 
-mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(1500, 1500))
+mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=figsize)
 mlab.clf()
-plot = mlab.mesh(x, y, z, scalars=om, colormap='RdBu', resolution=20, vmin=-120, vmax=120)
+plot = mlab.mesh(x, y, z, scalars=om, colormap='RdBu', resolution=20, vmin=-vmax, vmax=vmax)
 
 
 start_angle = 70
@@ -92,7 +94,7 @@ for angle in np.linspace(0, 2*np.pi, 16):
 #@mlab.animate(delay=100)
 #def anim():
 for count, ind in enumerate(range(ind_start,ind_end)):
-    with np.load(os.path.join(input_folder, 'sphere110/output_%i.npz' %(ind))) as file:
+    with np.load(os.path.join(input_folder, '%s/output_%i.npz' %(run_name, ind))) as file:
         om = file['om']
         time = file['t'][0]
         print('time=%f' %time)
