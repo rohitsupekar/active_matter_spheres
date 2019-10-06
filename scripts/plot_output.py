@@ -31,7 +31,7 @@ proj = ccrs.Mollweide(central_longitude=0)
 proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
 #fields = ['v_ph', 'om']
-fields = ['om']
+fields = ['om', 'v_ph']
 sim_number = int(sys.argv[1])
 input_folder = sys.argv[2]
 output_folder = sys.argv[3]
@@ -41,21 +41,19 @@ step = 3 #data frames to skip per video frame
 
 #count files in the input folder
 last_frame = len(glob.glob1("".join([input_folder,'/']),"*.npz"))
-last_frame = 200
 logger.info('Total number of frames: %i' %(last_frame))
 
 #set clims for all the fields
-max_vals = {key: 0 for key in fields}
+max_vals = {key: np.zeros(last_frame) for key in fields}
 clims = {key: 0 for key in fields}
 logger.info('Find max values..')
 for i in range(first_frame + 1, last_frame + 1, 1):
     with np.load("".join([input_folder, '/output_%i.npz' %i])) as file:
         for field in fields:
-            fieldval = file[field]
-            max_vals[field] = max(max_vals[field], np.max(fieldval))
+            max_vals[field][i-first_frame-i] = np.max(file[field])
 
 for field in fields:
-    clims[field] = 0.75*max_vals[field]
+    clims[field] = 0.75*np.max(max_vals[field])
 
 metadata = dict(title='Movie', artist='Matplotlib', comment='Movie support!')
 writer = FFMpegWriter(fps=FPS, metadata=metadata)

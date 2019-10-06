@@ -103,7 +103,10 @@ m = mlab.mesh(x+dx, y, z, scalars=om8, colormap='bwr')
 m = mlab.mesh(x+2*dx, y, z, scalars=om9, colormap='bwr')
 
 
-mlab.view(-90, 90, distance=4)
+#mlab.view(-90, 90, distance=4)
+mlab.view(92.68154288139874, 97.71140585714554, 3.9999999999999543, \
+        np.array([0.69999717, 0.        , 0.7       ]))
+
 #mlab.savefig("%s/mayavi.pdf" %(output_folder), magnification=100)
 #mlab.show()
 

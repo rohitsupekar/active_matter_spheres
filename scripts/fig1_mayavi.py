@@ -9,77 +9,44 @@ from scipy.sparse import linalg as spla
 import matplotlib.pyplot as plt
 import logging
 from mpl_toolkits import mplot3d
+from mayavi import mlab
+from scipy.special import sph_harm
 
 
 #add path to data folder
-input_folder = "data/"
+input_folder = "/Volumes/ExtDrive/data"
 output_folder = "plots"
 dpi=300
 
-ind1, ind2, ind3 = 10, 200, 900
+ind = 1200
+f00 = "%s/sphere113/output_%i.npz" %(input_folder, ind)
+f01 = "%s/sphere114/output_%i.npz" %(input_folder, ind)
+f02 = "%s/sphere115/output_%i.npz" %(input_folder, ind)
 
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
-    om1 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
-    om2 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
+f10 = "%s/sphere111/output_%i.npz" %(input_folder, ind)
+f11 = "%s/sphere109/output_%i.npz" %(input_folder, ind)
+f12 = "%s/sphere110/output_%i.npz" %(input_folder, ind)
 
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere6/output_%i.npz' %(ind))) as file:
-    om3 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
+f20 = "%s/sphere116/output_%i.npz" %(input_folder, ind)
+f21 = "%s/sphere117/output_%i.npz" %(input_folder, ind)
+f22 = "%s/sphere118/output_%i.npz" %(input_folder, ind)
 
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
-    om4 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
+fs = [[f00, f01, f02], [f10, f11, f12], [f20, f21, f22]]
+om_list = [[None, None, None] for i in range(3)]
 
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
-    om5 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
-
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere52/output_%i.npz' %(ind))) as file:
-    om6 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
-
-
-ind = ind1
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
-    om7 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
-
-ind = ind2
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
-    om8 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
-
-ind = ind3
-with np.load(os.path.join(input_folder, 'sphere50/output_%i.npz' %(ind))) as file:
-    phi = file['phi']
-    theta = file['theta']
-    om9 = file['om']
-    time = file['t'][0]
-    print('time=%f' %time)
+#load data
+for i, ls in enumerate(fs):
+    for j, str in enumerate(ls):
+        with np.load(str) as file:
+            print('Loaded %s' %(str))
+            om_list[i][j] = file['om']
+            phi = file['phi']
+            theta = file['theta']
+            time = file['t'][0]
+            print('time = %f' %(time))
 
 #change phi
 phi = np.linspace(0, 2*np.pi, len(phi))
-
-from mayavi import mlab
-import numpy as np
-from scipy.special import sph_harm
 
 # Create a sphere
 r = 0.3
@@ -97,31 +64,12 @@ mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(800, 700))
 mlab.clf()
 
 cmin, cmax = -300, 300
-m = mlab.mesh(x, y, z, scalars=om1, colormap='bwr')
-m = mlab.mesh(x, y+1, z, scalars=om2, colormap='bwr')
-m = mlab.mesh(x, y+2, z, scalars=om3, colormap='bwr')
 
-m = mlab.mesh(x+1, y, z, scalars=om4, colormap='bwr')
-m = mlab.mesh(x+1, y+1, z, scalars=om5, colormap='bwr')
-m = mlab.mesh(x+1, y+2, z, scalars=om6, colormap='bwr')
-
-m = mlab.mesh(x+2, y, z, scalars=om7, colormap='bwr')
-m = mlab.mesh(x+2, y+1, z, scalars=om8, colormap='bwr')
-m = mlab.mesh(x+2, y+2, z, scalars=om9, colormap='bwr')
-
+for i, ls in enumerate(om_list):
+    for j, om in enumerate(ls):
+        om_max = np.max(om)
+        mlab.mesh(x+j, y-i, z, scalars=om, colormap='coolwarm', vmax=0.6*om_max, vmin=-0.6*om_max)
 
 mlab.view(50, 60, distance=5.5)
-mlab.savefig("%s/mayavi.pdf" %(output_folder), magnification=100)
-#mlab.show()
-
-mlab.figure(2, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(700, 300))
-mlab.clf()
-m = mlab.mesh(x, y, z, scalars=om3, colormap='bwr')
-m = mlab.mesh(x+0.7, y, z, scalars=om6, colormap='bwr')
-m = mlab.mesh(x+1.4, y, z, scalars=om9, colormap='bwr')
-mlab.view(-90, 90, distance=1.5)
-
-mlab.savefig("%s/mayavi_front.pdf" %(output_folder), magnification=100)
-
-
+#mlab.savefig("%s/mayavi.pdf" %(output_folder), magnification=100)
 mlab.show()
