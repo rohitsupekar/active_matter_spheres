@@ -13,19 +13,19 @@ import numpy as np
 
 
 #add path to data folder
-input_folder = "data/"
+input_folder = "/Volumes/ExtDrive/data"
 output_folder = "plots"
-run_name = 'sphere111'
+run_name = 'sphere110'
 save_name = 'test'
 offscreen = True
 figsize = (1500, 1500)
-vmax = 25
+vmax = 120
 #vmax = 120 #for sphere110
 
 mlab.options.offscreen = offscreen
 
-ind_start = 250
-ind_end = 3340
+ind_start = 1000
+ind_end = 4999
 
 with np.load(os.path.join(input_folder, '%s/output_%i.npz' %(run_name,ind_start))) as file:
     om = file['om']
@@ -54,10 +54,10 @@ mlab.clf()
 plot = mlab.mesh(x, y, z, scalars=om, colormap='RdBu', resolution=20, vmin=-vmax, vmax=vmax)
 
 
-start_angle = 70
-end_angle = 10
+start_angle = 55
+end_angle = 55
 start_dist = 1.7
-end_dist = 1.2
+end_dist = 1.7
 degs_per_ind = 0.014
 dist_per_ind = 0.0001
 
