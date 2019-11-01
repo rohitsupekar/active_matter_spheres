@@ -1,4 +1,5 @@
 #get spectral coefficients for omega
+#script to be used with bash script
 
 import os
 import sys
@@ -106,16 +107,16 @@ with writer.saving(fig, "%s/sphere%i_om_coeffs.mp4" %(output_folder, sim_number)
             title = fig.suptitle('t = %.4f' %time)
 
             image0 = ax[0].pcolormesh(phi, theta, om.T, cmap='RdBu_r')
-            ax[0].set_ylabel("$\\theta$"), ax[0].set_xlabel("$\phi$")
-            ax[0].set_title("$\omega (\\theta, \phi)$",fontsize=15)
+            ax[0].set_ylabel(r'$\theta$'), ax[0].set_xlabel(r'$\phi$')
+            ax[0].set_title(r'$\omega (\theta, \phi)$',fontsize=15)
             ax[0].invert_yaxis()
             fig.colorbar(image0, ax=ax[0])
             image0.set_clim(-clims['om'], clims['om'])
 
             image1 = ax[1].scatter(mm.flatten(), ellell.flatten(), mag_fac*mag.flatten(), c=phase.flatten(), cmap='hsv', edgecolor='none')
             ax[1].set_xlim(-1, ell_max), ax[1].set_ylim(-1, ell_max)
-            ax[1].set_xlabel('$m$'), ax[1].set_ylabel('$\ell$')
-            ax[1].set_title('$\hat{\omega}_{\ell, m}$',fontsize=15)
+            ax[1].set_xlabel('$m$'), ax[1].set_ylabel(r'$\ell$')
+            ax[1].set_title(r'$\hat{\zeta}_{\ell, m}$',fontsize=15)
             ax[1].set_aspect('equal')
             image1.set_clim(0, 2*np.pi)
             fig.colorbar(image1, ax=ax[1])

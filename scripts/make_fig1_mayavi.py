@@ -16,6 +16,7 @@ from scipy.special import sph_harm
 input_folder = "/Volumes/ExtDrive/data"
 output_folder = "plots"
 dpi=300
+cmap = "RdBu"
 
 ind = 1500
 f00 = "%s/sphere113/output_%i.npz" %(input_folder, ind)
@@ -59,7 +60,7 @@ y = r * sin(phiphi) * sin(thth)
 z = r * cos(phiphi)
 
 #s = sph_harm(0, 10, theta, phi).real
-m = mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(1000, 1600))
+m = mlab.figure(1, bgcolor=(1, 1, 1), fgcolor=(1, 1, 1), size=(1500, 1600))
 mlab.clf()
 
 cmin, cmax = -300, 300
@@ -68,9 +69,14 @@ for i, ls in enumerate(om_list):
     for j, om in enumerate(ls):
         om_max = np.max(om)
         if fs[i][j] == f02:
-            mlab.mesh(x+j*dx, y, z-i*dx, scalars=om, colormap='coolwarm', vmax=0.3*om_max, vmin=-0.3*om_max)
+            mlab.mesh(x+j*dx, y, z-i*dx, scalars=om, colormap=cmap, vmax=0.3*om_max, vmin=-0.3*om_max)
         else:
-            mlab.mesh(x+j*dx, y, z-i*dx, scalars=om, colormap='coolwarm', vmax=0.6*om_max, vmin=-0.6*om_max)
+            mlab.mesh(x+j*dx, y, z-i*dx, scalars=om, colormap=cmap, vmax=0.6*om_max, vmin=-0.6*om_max)
+
+#plot the spherical harmonics
+for j, ell in enumerate([5, 10, 21]):
+    s = sph_harm(0, ell, thth, phiphi).real
+    mlab.mesh(x + 3*dx , y, z-j*dx, scalars=s, colormap=cmap, vmax=0.4, vmin=-.4)
 
 mlab.view(-90, 90, distance=4)
 #mlab.savefig("%s/fig1_headon.pdf" %(output_folder), magnification=1)

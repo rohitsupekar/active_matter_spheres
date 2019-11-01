@@ -12,14 +12,15 @@ from mpl_toolkits import mplot3d
 from mayavi import mlab
 from scipy.special import sph_harm
 
-mlab.options.offscreen = True
+mlab.options.offscreen = False
 
 #add path to data folder
-input_folder = "data/"
+input_folder = "/Volumes/ExtDrive/data"
 output_folder = "plots"
 dpi=300
+cmap="coolwarm"
 
-ind = 4999 #time ind
+ind = 4500 #time ind
 
 with np.load(os.path.join(input_folder, 'sphere113/output_%i.npz' %(ind))) as file:
     om1 = file['om']
@@ -91,17 +92,17 @@ mlab.clf()
 
 cmin, cmax = -300, 300
 dx = 0.7
-m = mlab.mesh(x, y, z+2*dx, scalars=om1, colormap='bwr')
-m = mlab.mesh(x+dx, y, z+2*dx, scalars=om2, colormap='bwr')
-m = mlab.mesh(x+2*dx, y, z+2*dx, scalars=om3, colormap='bwr')
+m = mlab.mesh(x, y, z+2*dx, scalars=om1, colormap=cmap)
+m = mlab.mesh(x+dx, y, z+2*dx, scalars=om2, colormap=cmap)
+m = mlab.mesh(x+2*dx, y, z+2*dx, scalars=om3, colormap=cmap)
 
-m = mlab.mesh(x, y, z+dx, scalars=om4, colormap='bwr')
-m = mlab.mesh(x+dx, y, z+dx, scalars=om5, colormap='bwr')
-m = mlab.mesh(x+2*dx, y, z+dx, scalars=om6, colormap='bwr')
+m = mlab.mesh(x, y, z+dx, scalars=om4, colormap=cmap)
+m = mlab.mesh(x+dx, y, z+dx, scalars=om5, colormap=cmap)
+m = mlab.mesh(x+2*dx, y, z+dx, scalars=om6, colormap=cmap)
 
-m = mlab.mesh(x, y, z, scalars=om7, colormap='bwr')
-m = mlab.mesh(x+dx, y, z, scalars=om8, colormap='bwr')
-m = mlab.mesh(x+2*dx, y, z, scalars=om9, colormap='bwr')
+m = mlab.mesh(x, y, z, scalars=om7, colormap=cmap)
+m = mlab.mesh(x+dx, y, z, scalars=om8, colormap=cmap)
+m = mlab.mesh(x+2*dx, y, z, scalars=om9, colormap=cmap)
 
 
 mlab.view(-90, 90, distance=4)
@@ -110,12 +111,10 @@ mlab.view(-90, 90, distance=4)
 
 #mlab.figure(2, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=(700, 300))
 #mlab.clf()
-#m = mlab.mesh(x, y, z, scalars=om3, colormap='bwr')
-#m = mlab.mesh(x+0.7, y, z, scalars=om6, colormap='bwr')
-#m = mlab.mesh(x+1.4, y, z, scalars=om9, colormap='bwr')
+#m = mlab.mesh(x, y, z, scalars=om3, colormap=cmap)
+#m = mlab.mesh(x+0.7, y, z, scalars=om6, colormap=cmap)
+#m = mlab.mesh(x+1.4, y, z, scalars=om9, colormap=cmap)
 #mlab.view(-90, 90, distance=1.5)
 
-mlab.savefig("%s/mayavi_front.pdf" %(output_folder), magnification=100)
-
-
-#mlab.show()
+#mlab.savefig("%s/mayavi_front.pdf" %(output_folder), magnification=100)
+mlab.show()
