@@ -74,7 +74,7 @@ for i, ls in enumerate(om_list):
             mlab.mesh(x+j*dx, y, z-i*dx, scalars=om, colormap=cmap, vmax=0.6*om_max, vmin=-0.6*om_max)
 
 #plot the spherical harmonics
-for j, ell in enumerate([5, 10, 21]):
+for j, ell in enumerate([6, 11, 21]):
     s = sph_harm(0, ell, thth, phiphi).real
     mlab.mesh(x + 3*dx , y, z-j*dx, scalars=s, colormap=cmap, vmax=0.4, vmin=-.4)
 

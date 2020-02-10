@@ -15,17 +15,19 @@ import numpy as np
 #add path to data folder
 input_folder = "/Volumes/ExtDrive/data"
 output_folder = "plots"
-run_name = 'sphere110'
-save_name = 'test'
+run_name = 'sphere111'
+save_name = 'sphere111'
 offscreen = True
-figsize = (1500, 1500)
-vmax = 120
+figsize = (1000, 1000)
+#vmax = 60 #for sphere109
+vmax = 30 #for sphere111
 #vmax = 120 #for sphere110
 
 mlab.options.offscreen = offscreen
 
 ind_start = 1000
-ind_end = 4999
+ind_end = 3000
+#ind_end = 1200
 
 with np.load(os.path.join(input_folder, '%s/output_%i.npz' %(run_name,ind_start))) as file:
     om = file['om']
@@ -53,11 +55,17 @@ mlab.figure(1, bgcolor=(0, 0, 0), fgcolor=(1, 1, 1), size=figsize)
 mlab.clf()
 plot = mlab.mesh(x, y, z, scalars=om, colormap='RdBu', resolution=20, vmin=-vmax, vmax=vmax)
 
-
+#(for not moving)
 start_angle = 55
 end_angle = 55
-start_dist = 1.7
-end_dist = 1.7
+start_dist = 1.5
+end_dist = 1.5
+
+#for moving
+#start_angle = 70
+#end_angle = 10
+#start_dist = 1.7
+#end_dist = 1.2
 degs_per_ind = 0.014
 dist_per_ind = 0.0001
 
@@ -80,7 +88,7 @@ for angle in (-np.pi/3, -np.pi/6, 0., np.pi/6, np.pi/3):
     z_ = r*np.ones_like(phi) * np.sin(angle)
 
     mlab.plot3d(x_, y_, z_, color=(0, 0, 0),
-                        opacity=1, tube_radius=None, representation='wireframe')
+                        opacity=1, tube_radius=0.001, representation='wireframe')
 
 th_ = np.linspace(-np.pi/3, np.pi/3, 100)
 for angle in np.linspace(0, 2*np.pi, 16):
@@ -89,7 +97,7 @@ for angle in np.linspace(0, 2*np.pi, 16):
     z_ = r*np.ones_like(angle) * np.sin(th_)
 
     mlab.plot3d(x_, y_, z_, color=(0, 0, 0),
-                        opacity=1, tube_radius=None, representation='wireframe')
+                        opacity=1, tube_radius=0.001, representation='wireframe')
 
 #@mlab.animate(delay=100)
 #def anim():
