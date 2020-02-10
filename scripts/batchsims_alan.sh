@@ -1,14 +1,14 @@
 #!/bin/bash
 
 
-declare -i k0=119 #start counter of folders
+declare -i k0=141 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
 
 SESNAME="sphere"
 PARNAME="param_alan"
-RUNSCRIPT="runningSimulation_rossby.py"
+RUNSCRIPT="runningSimulation_pars_alan.py"
 RUNSCRIPTCOEFFS="plot_omega_coeffs.py"
 FIELD="om_coeffs"
 
@@ -16,15 +16,15 @@ FRATE=15 #frame rate for making the video
 
 ### SIMULATION PARAMETERS ###
 
-LL=( 4 )
+LL=( 4 4 4 4 4 4 4 4 4 4 4 )
 kk=( 1 )
-ff=( 100 )
+ff=( 500 )
 facfac=( 0.1 )
-isInertial=True
-NOTE="Rossby waves (ell=6, m=[0, 1, 2, 3, 4, 5, 6])" #add anything special about these simulations, else leave empty
+isInertial=False
+NOTE="" #add anything special about these simulations, else leave empty
 
 #number of cores to be used
-declare -i ncores=8
+declare -i ncores=12
 
 ### Make files and folders if they don't exist ###
 
@@ -87,16 +87,16 @@ for (( l = 0 ; l < ${#LL[@]} ; l++ )) ; do
           # wait for processes to be done
           wait
 
-          echo "Starting plot/video command group in background.."
-          {
-          echo "Running plot script.."
+          #echo "Starting plot/video command group in background.."
+          #{
+          #echo "Running plot script.."
           # run plot script
-          python3 plot_output.py $k  data/$SESNAME$k videos $FRATE > $SESNAME$k'_plot.out' 2>&1
-          wait
-          echo "Running coeffs script.."
+          #python3 plot_output.py $k  data/$SESNAME$k videos $FRATE > $SESNAME$k'_plot.out' 2>&1
+          #wait
+          #echo "Running coeffs script.."
 
-          python3 $RUNSCRIPTCOEFFS $k $FRATE > $SESNAME$k'_coeffs.out' 2>&1
-          wait
+          #python3 $RUNSCRIPTCOEFFS $k $FRATE > $SESNAME$k'_coeffs.out' 2>&1
+          #wait
 
           #remove files if they already exist
           #rm videos/$SESNAME$k'_v_ph.mp4'
@@ -108,7 +108,7 @@ for (( l = 0 ; l < ${#LL[@]} ; l++ )) ; do
           #ffmpeg -r $FRATE -f image2 -s 1920x1080 -i images/$SESNAME$k/om_%05d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p videos/$SESNAME$k'_om.mp4' > video.out 2>&1
           #ffmpeg -r $FRATE -f image2 -s 1920x1080 -i images/$SESNAME$k/$FIELD'_%05d.png' -vcodec libx264 -crf 25  -pix_fmt yuv420p videos/$SESNAME$k'_'$FIELD'.mp4' > video.out 2>&1
 
-        } &
+        #} &
 
           # increment k
           k=$k+1

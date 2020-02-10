@@ -46,7 +46,7 @@ v0 = 0.01
 #ell0 = [4, 5, 6, 7]
 #m0 = [2, 3, 4]
 ell0 = [6]
-m0 = [0, 1, 2, 3, 4, 5, 6]
+m0 = [0, 1, 2]
 
 params = [gamma, e0, e1, e2, fspin]
 
@@ -116,6 +116,7 @@ for dm, m in enumerate(simplesphere.local_m):
     if m in m0:
         for ell in ell0:
             v.coeffs[dm][ell - m] = v0
+
 
 state_system.pack_coeffs()
 

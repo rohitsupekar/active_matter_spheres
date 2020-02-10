@@ -48,7 +48,7 @@ Amp = 1e-2  # initial noise amplitude
 factor = float(sys.argv[4])
 dt = factor/(100)
 n_iterations = int(5000/factor)# total iterations. Change 10000 to higher number for longer run!
-n_output = int(1/factor)  # data output cadence
+n_output = int(5/factor)  # data output cadence
 n_clean = 10
 output_folder = sys.argv[5]  # data output folder
 
@@ -97,8 +97,8 @@ if isInertialRot==True:
     v.forward_theta()
 
 # Add random perturbations to the velocity coefficients
-#seed0 = np.random.randint(0, 1000)
-seed0 = 42
+seed0 = np.random.randint(0, 10000)
+#seed0 = 42
 logger.info("seed0 = %i" %(seed0))
 rand = np.random.RandomState(seed=seed0+rank)
 for dm, m in enumerate(simplesphere.local_m):
