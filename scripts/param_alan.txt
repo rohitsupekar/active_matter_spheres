@@ -106,10 +106,6 @@ sphere116	8	1	0	0.1
 sphere117	8	1	500	0.1	
 sphere118	8	1	1000	0.1	
 sphere119	4	1	100	0.1	Rossby waves (ell=6, m=[0, 1, 2, 3, 4, 5, 6])
-sphere119	4	1	100	0.1	Rossby waves (ell=6, m=[0,qq 1, 2, 3, 4, 5, 6])
-sphere119	4	1	100	0.1	Rossby waves (ell=6, m=[0,qq 1, 2, 3, 4, 5, 6])
-sphere119	4	1	100	0.1	Rossby waves (ell=6, m=[0,qq 1, 2, 3, 4, 5, 6])
-sphere119	4	1	100	0.1	Rossby waves (ell=6, m=[0,qq 1, 2, 3, 4, 5, 6])
 sphere120	8	1	1000	0.1	
 sphere121	8	1	1000	0.1		
 sphere122	8	1	1000	0.1	
