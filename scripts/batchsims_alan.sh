@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-declare -i k0=141 #start counter of folders
+declare -i k0=142 #start counter of folders
 declare -i k=$k0
 
 export OMP_NUM_THREADS=1
@@ -16,7 +16,7 @@ FRATE=15 #frame rate for making the video
 
 ### SIMULATION PARAMETERS ###
 
-LL=( 4 4 4 4 4 4 4 4 4 4 4 )
+LL=( 4 )
 kk=( 1 )
 ff=( 500 )
 facfac=( 0.1 )

@@ -134,3 +134,10 @@ sphere140	4	1	1000	0.1
 sphere141	4	1	500	0.1	
 sphere142	4	1	500	0.1	
 sphere143	4	1	500	0.1	
+sphere144	4	1	500	0.1	
+sphere145	4	1	500	0.1	
+sphere146	4	1	500	0.1	
+sphere147	4	1	500	0.1	
+sphere148	4	1	500	0.1	
+sphere149	4	1	500	0.1	
+sphere150	4	1	500	0.1		

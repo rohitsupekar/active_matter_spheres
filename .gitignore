@@ -15,3 +15,4 @@ scripts/*out
 .ipynb_checkpoints/
 jupyter/.ipynb_checkpoints/
 mayavi/
+coeffs_data/

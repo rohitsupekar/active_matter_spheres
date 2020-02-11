@@ -24,7 +24,7 @@ dpi=300
 first_frame = 1
 last_frame = 1000
 
-sphere_list = ['sphere%i' %(i) for i in range(120, 150)]
+sphere_list = ['sphere%i' %(i) for i in range(141, 150)]
 fs = ["%s/%s" %(input_folder, sphere_list[i]) for i in range(len(sphere_list))]
 
 t_arr = np.zeros(last_frame - first_frame + 1)
@@ -60,7 +60,7 @@ for i, str in enumerate(fs):
             om_coeffs[j, m, m:] = omega.coeffs[m]
 
     save_dict = {'t': t_arr, 'om_coeffs': om_coeffs}
-    with open('../data/%s.pkl' %(sphere_list[i]), 'wb') as file:
+    with open('%s/%s.pkl' %(output_folder, sphere_list[i]), 'wb') as file:
         pkl.dump(save_dict, file, protocol=pkl.HIGHEST_PROTOCOL)
 
     print('\nSAVED!!!!\n')
