@@ -12,7 +12,9 @@ Dedalus ([install using conda](https://dedalus-project.readthedocs.io/en/latest/
 
 Go to the standalone directory:
 
-`cd standalone`
+```
+cd standalone
+```
 
 Activate the conda dedalus environment: 
 
