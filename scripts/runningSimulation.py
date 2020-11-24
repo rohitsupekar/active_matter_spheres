@@ -1,5 +1,4 @@
 """Simulation script."""
-#blah
 import os
 import time
 import pathlib
