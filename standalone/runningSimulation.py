@@ -21,7 +21,7 @@ L_max = 127  #Spherical harmonic order
 S_max = 4  # Spin order (leave fixed)
 
 # Model parameters
-Lmid = 4   #R/Lambda 
+Lmid = 4   #R/Lambda
 kappa = 1  #spectral injection bandwidth
 gamma = 1  # surface mass density
 fspin = 500 #fspin = 2 Omega
@@ -40,10 +40,10 @@ params = [gamma, e0, e1, e2, fspin]
 Amp = 1e-2  # initial noise amplitude
 factor = 0.5   #controls the time step below to be 0.5/(100*Lmid^2), which is 0.5/100 of characteristic vortex dynamics time
 dt = factor/(100)
-n_iterations = int(10000/factor)# total iterations. Change 10000 to higher number for longer run!
+n_iterations = int(1000/factor)# total iterations. Change 1000 to higher number for longer run!
 n_output = int(10/factor)  # data output cadence
 n_clean = 10
-output_folder = 'output_garbage'  # data output folder
+output_folder = 'output'  # data output folder
 
 # Prevent running from dropbox
 path = pathlib.Path(__file__).resolve()
