@@ -10,22 +10,23 @@ Dedalus ([install using conda](https://dedalus-project.readthedocs.io/en/latest/
 
 ## For a standalone run, do the following:
 
-Go to the standalone directory:
+Activate the conda dedalus environment and go to the standalone directory:
 
 ```
+conda activate dedalus
 cd standalone
 ```
-
-Activate the conda dedalus environment: 
-
-`conda activate dedalus`
 
 Specify the run parameters and output folder in `standalone/runningSimulation.py`. 
 
 Run the script:
 
-`mpiexec -n <ncores> python3 runningSimulation.py`
+```
+mpiexec -n <ncores> python3 runningSimulation.py
+```
 
 For an example of plotting and making a video from the saved data:
 
-`mpiexec python3 plot_output.py`
+```
+mpiexec python3 plot_output.py
+```
