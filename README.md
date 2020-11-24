@@ -8,8 +8,10 @@ Major dependency:
 
 Dedalus ([install using conda](https://dedalus-project.readthedocs.io/en/latest/pages/installation.html#conda-installation-recommended))
 
-For a standalone run, do the following: 
+For a standalone run, do the following:
+
 `cd standalone`
+
 `conda activate dedalus`
 
 Specify the run parameters and output folder in `standalone/runningSimulation.py`. 
