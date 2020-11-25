@@ -28,5 +28,5 @@ mpiexec -n <ncores> python3 runningSimulation.py
 For an example of plotting and making a video from the saved data:
 
 ```
-mpiexec python3 plot_output.py
+python3 plot_output.py
 ```
