@@ -32,7 +32,7 @@ proj = ccrs.Orthographic(central_longitude=0, central_latitude=30)
 #fields = ['p','om','vth','vph']
 #fields = ['v_ph', 'om']
 fields = ['om', 'v_ph']
-sim_number = 1 #set as the prefix of the video file
+sim_number = 1 #set as the suffix of the video file
 input_folder = 'output' #input folder for data
 output_folder = 'videos' #where to write the video?
 FPS = 15
